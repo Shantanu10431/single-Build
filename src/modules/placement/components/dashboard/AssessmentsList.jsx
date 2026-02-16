@@ -1,30 +1,17 @@
 import { Calendar, Clock } from "lucide-react";
 
-const assessments = [
-    {
-        title: "DSA Mock Test",
-        date: "Tomorrow",
-        time: "10:00 AM",
-        type: "Technical",
-    },
-    {
-        title: "System Design Review",
-        date: "Wed",
-        time: "2:00 PM",
-        type: "Review",
-    },
-    {
-        title: "HR Interview Prep",
-        date: "Friday",
-        time: "11:00 AM",
-        type: "Behavioral",
-    },
-];
+export const AssessmentsList = ({ items = [] }) => {
+    if (items.length === 0) {
+        return (
+            <div className="text-center py-8 text-gray-500 text-sm">
+                No upcoming assessments.
+            </div>
+        );
+    }
 
-export const AssessmentsList = () => {
     return (
         <div className="space-y-4">
-            {assessments.map((item, index) => (
+            {items.map((item, index) => (
                 <div
                     key={index}
                     className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors"

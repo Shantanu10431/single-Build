@@ -1,6 +1,5 @@
-"use client";
 
-export const ReadinessChart = ({ score }: { score: number }) => {
+export const ReadinessChart = ({ score }) => {
     const radius = 50;
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (score / 100) * circumference;

@@ -74,6 +74,34 @@ export default function DashboardPage() {
         console.log(`Status for job ${id} updated to ${newStatus}`);
     };
 
+    // Demo Data State
+    const DEMO_STATE = {
+        savedIds: ['j1', 'j2', 'j14', 'j45', 'j32'],
+        statusMap: {
+            'j1': { status: 'Applied', updatedAt: new Date().toISOString() },
+            'j14': { status: 'Interviewing', updatedAt: new Date().toISOString() },
+            'j45': { status: 'In Progress', updatedAt: new Date().toISOString() },
+            'j32': { status: 'Offer Received', updatedAt: new Date().toISOString() },
+        },
+        prefs: {
+            minMatchScore: 70,
+            roles: ['Frontend Developer', 'Software Engineer', 'Full Stack Developer'],
+            locations: ['Bangalore', 'Remote', 'Pune'],
+            experienceLevel: 'Fresher'
+        }
+    };
+
+    const loadDemoData = () => {
+        setSavedIds(DEMO_STATE.savedIds);
+        setStatusMap(DEMO_STATE.statusMap);
+        setPrefs(DEMO_STATE.prefs);
+
+        // Persist to localStorage
+        localStorage.setItem("kodnest_saved_jobs", JSON.stringify(DEMO_STATE.savedIds));
+        localStorage.setItem("jobTrackerStatus", JSON.stringify(DEMO_STATE.statusMap));
+        localStorage.setItem("jobTrackerPreferences", JSON.stringify(DEMO_STATE.prefs));
+    };
+
     // Compute Scores & Filter
     const filteredJobs = useMemo(() => {
         let result = JOBS.map(job => ({
@@ -128,6 +156,11 @@ export default function DashboardPage() {
             <ContextHeader
                 title="Dashboard"
                 description="Tracking your active job search progress."
+                action={
+                    <Button variant="outline" size="sm" onClick={loadDemoData} className="gap-2">
+                        Load Demo Data
+                    </Button>
+                }
             />
 
             <FilterBar
