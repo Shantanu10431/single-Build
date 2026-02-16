@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+/* --- Job Tracker Design System --- */
+@import "./modules/job-tracker/styles/tokens.css";
+/* Importing base styles. Note: This applies global styles (fonts, headings) across the app. */
+@import "./modules/job-tracker/styles/base.css";
+
+@theme {
+  /* --- Resume Builder Theme Extensions --- */
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+
+  /* --- Placement Platform Theme Extensions --- */
+  --color-primary: hsl(245, 58%, 51%);
+  --color-primary-hover: hsl(245, 58%, 45%);
+
+  /* --- Shared Configuration --- */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* --- Global Overrides & Resets --- */
+
+/* Ensure standardized body background if not set by base.css, or override it */
+body {
+  @apply antialiased;
+  /* Use the background from base.css (var(--kn-background)) or override to gray-50? */
+  /* Letsstick to job-tracker's slightly off-white for consistency, or gray-50 for standard */
+  /* background-color: var(--kn-background, #f9fafb); */
+}
+
+/* --- Resume Builder Print Styles --- */
+@media print {
+  @page {
+    margin: 0;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: hsl(245, 58%, 51%);
+  --color-primary-hover: hsl(245, 58%, 45%);
+}
+
+/* Tailwind v4 automatically handles defaults, no @layer base needed for basic reset */
+body {
+  @apply antialiased text-gray-900 bg-gray-50;
+}
