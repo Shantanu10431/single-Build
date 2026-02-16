@@ -17,18 +17,25 @@ export default function PreviewPage() {
 
     // Persistence: Load
     useEffect(() => {
-        const saved = localStorage.getItem('resumeBuilderData');
+        const saved = localStorage.getItem('aiResumeBuilderData_v2');
         if (saved) {
             try {
-                const parsed = JSON.parse(saved);
-                // Migration: Check if skills is an array (Legacy)
-                if (Array.isArray(parsed.skills)) {
-                    parsed.skills = {
-                        technical: parsed.skills, // Move old skills to technical
-                        soft: [],
-                        tools: []
-                    };
-                }
+                let parsed = JSON.parse(saved);
+
+                // 2. Safe Merge: Ensure all structure exists
+                parsed = { ...INITIAL_RESUME_DATA, ...parsed };
+
+                // Deep merge objects to avoid overwriting with incomplete objects
+                parsed.personalInfo = { ...INITIAL_RESUME_DATA.personalInfo, ...(parsed.personalInfo || {}) };
+                parsed.skills = { ...INITIAL_RESUME_DATA.skills, ...(parsed.skills || {}) };
+
+                // Ensure arrays exist
+                parsed.experience = Array.isArray(parsed.experience) ? parsed.experience : [];
+                parsed.education = Array.isArray(parsed.education) ? parsed.education : [];
+                parsed.projects = Array.isArray(parsed.projects) ? parsed.projects : [];
+                parsed.skills.technical = Array.isArray(parsed.skills.technical) ? parsed.skills.technical : [];
+                parsed.skills.soft = Array.isArray(parsed.skills.soft) ? parsed.skills.soft : [];
+                parsed.skills.tools = Array.isArray(parsed.skills.tools) ? parsed.skills.tools : [];
 
                 // Migration: Projects (techStack string -> technologies array)
                 if (parsed.projects) {
@@ -40,7 +47,10 @@ export default function PreviewPage() {
 
                 setData(parsed);
                 validateData(parsed);
-            } catch (e) { console.error('Failed to load resume data', e); }
+            } catch (e) {
+                console.error('Failed to load resume data', e);
+                setData(SAMPLE_RESUME_DATA);
+            }
         } else {
             // Fallback for demo if no data
             setData(SAMPLE_RESUME_DATA);

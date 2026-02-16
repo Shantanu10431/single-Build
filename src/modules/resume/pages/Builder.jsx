@@ -19,19 +19,34 @@ export default function BuilderPage() {
 
     // Persistence: Load
     useEffect(() => {
-        const saved = localStorage.getItem('resumeBuilderData');
+        const saved = localStorage.getItem('aiResumeBuilderData_v2');
         if (saved) {
             try {
-                const parsedData = JSON.parse(saved);
+                let parsedData = JSON.parse(saved);
 
-                // Migration: Check if skills is an array (Legacy)
+                // 1. Migration: Legacy Skills Array -> Object
                 if (Array.isArray(parsedData.skills)) {
                     parsedData.skills = {
-                        technical: parsedData.skills, // Move old skills to technical
+                        technical: parsedData.skills,
                         soft: [],
                         tools: []
                     };
                 }
+
+                // 2. Safe Merge: Ensure all structure exists
+                parsedData = { ...INITIAL_RESUME_DATA, ...parsedData };
+
+                // Deep merge objects to avoid overwriting with incomplete objects
+                parsedData.personalInfo = { ...INITIAL_RESUME_DATA.personalInfo, ...(parsedData.personalInfo || {}) };
+                parsedData.skills = { ...INITIAL_RESUME_DATA.skills, ...(parsedData.skills || {}) };
+
+                // Ensure arrays exist
+                parsedData.experience = Array.isArray(parsedData.experience) ? parsedData.experience : [];
+                parsedData.education = Array.isArray(parsedData.education) ? parsedData.education : [];
+                parsedData.projects = Array.isArray(parsedData.projects) ? parsedData.projects : [];
+                parsedData.skills.technical = Array.isArray(parsedData.skills.technical) ? parsedData.skills.technical : [];
+                parsedData.skills.soft = Array.isArray(parsedData.skills.soft) ? parsedData.skills.soft : [];
+                parsedData.skills.tools = Array.isArray(parsedData.skills.tools) ? parsedData.skills.tools : [];
 
                 // Migration: Projects (techStack string -> technologies array)
                 if (parsedData.projects) {
@@ -47,7 +62,11 @@ export default function BuilderPage() {
                 }
 
                 setData(parsedData);
-            } catch (e) { console.error('Failed to load resume data', e); }
+            } catch (e) {
+                console.error('Failed to load resume data', e);
+                // Fallback to initial data if parse fails
+                setData(INITIAL_RESUME_DATA);
+            }
         }
         setLoaded(true);
     }, []);
@@ -55,7 +74,7 @@ export default function BuilderPage() {
     // Persistence: Save
     useEffect(() => {
         if (loaded) {
-            localStorage.setItem('resumeBuilderData', JSON.stringify(data));
+            localStorage.setItem('aiResumeBuilderData_v2', JSON.stringify(data));
         }
     }, [data, loaded]);
 
