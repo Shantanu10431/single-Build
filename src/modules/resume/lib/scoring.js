@@ -1,13 +1,9 @@
-import { ResumeData } from '@/types/resume';
+// Types removed for JavaScript
+// import { ResumeData } from '@/modules/resume/types/resume';
 
-export interface ATSScore {
-    score: number; // 0-100
-    suggestions: string[];
-}
-
-export function calculateATSScore(data: ResumeData): ATSScore {
+export function calculateATSScore(data) {
     let score = 0;
-    const suggestions: string[] = [];
+    const suggestions = [];
 
     // 1. Contact Info (+30 max)
     if (data.personalInfo.fullName) score += 10;

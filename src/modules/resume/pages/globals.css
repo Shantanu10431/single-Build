@@ -1,0 +1,176 @@
+@import "tailwindcss";
+
+@theme {
+  --color-main: var(--bg-main);
+  --color-card: var(--bg-card);
+  --color-accent: var(--accent);
+  --color-text-main: var(--text-main);
+  --color-muted: var(--text-muted);
+  --color-border: var(--border);
+
+  --font-sans: var(--font-sans), sans-serif;
+  --font-serif: var(--font-serif), serif;
+}
+
+:root {
+  /* Color Palette (Max 4 Colors) */
+  --bg-main: #F7F6F3;
+  /* Off-white canvas */
+  --bg-card: #FFFFFF;
+  /* Pure white surfaces */
+  --text-main: #111111;
+  /* Deep black text */
+  --accent: #8B0000;
+  /* Deep Red */
+
+  /* Derived/Functional Colors */
+  --border: #E5E5E5;
+  --text-muted: #666666;
+
+  /* Typography */
+  --font-serif: 'Playfair Display', serif;
+  --font-sans: 'Inter', sans-serif;
+
+  /* Spacing Scale */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 40px;
+  --space-5: 64px;
+
+  --header-height: 80px;
+  --footer-height: 80px;
+}
+
+/* Base Styles */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-main text-text-main font-sans min-h-screen flex flex-col;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-serif font-bold text-text-main tracking-tight;
+  }
+}
+
+/* Component Layer */
+@layer components {
+  .card {
+    @apply bg-card border border-border shadow-sm rounded-sm;
+  }
+
+  .input {
+    @apply bg-card border border-border p-2 w-full rounded-sm focus:outline-none focus:border-accent;
+  }
+
+  .badge {
+    @apply font-serif text-xs px-3 py-1 border border-text-main text-text-main uppercase tracking-wider;
+  }
+
+  .btn-primary {
+    @apply bg-accent text-white px-4 py-2 rounded-sm font-medium hover:opacity-90 transition-opacity;
+  }
+}
+
+/* Utility Utilities shim for missing Tailwind v4 default utilities if any */
+@utility text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+@utility text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+@utility text-base {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+@utility text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
+@utility text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+@utility text-4xl {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+}
+
+@utility text-6xl {
+  font-size: 3.75rem;
+  line-height: 1;
+}
+
+/* Gray Scale Shims if standard palette is missing in v4 minimal setup */
+@theme {
+  --color-gray-100: #f5f5f5;
+  --color-gray-200: #e5e5e5;
+  --color-gray-300: #d4d4d4;
+  --color-gray-400: #a3a3a3;
+  --color-gray-500: #737373;
+  --color-gray-600: #525252;
+  --color-gray-700: #404040;
+  --color-gray-800: #262626;
+  --color-black: #000000;
+  --color-white: #ffffff;
+}
+
+@media print {
+  @page {
+    margin: 0;
+    size: auto;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    background: white !important;
+  }
+
+  /* Hide Navbar and buttons are handled by utility classes print:hidden */
+
+  /* Ensure container fills page */
+  .min-h-screen {
+    min-height: auto !important;
+    height: auto !important;
+  }
+
+  /* Reset Preview Container Margins/Shadows */
+  div[class*="shadow-md"] {
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    /* Let specific padding be handled inside if needed, or rely on Reset */
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* Avoid breaking bullets */
+  section {
+    break-inside: avoid;
+  }
+
+  p,
+  h1,
+  h2,
+  h3,
+  li {
+    break-inside: avoid;
+  }
+}

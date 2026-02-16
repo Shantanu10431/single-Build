@@ -1,16 +1,15 @@
-'use client';
 
-import { TemplateType } from '@/types/resume';
+// import { TemplateType } from '@/modules/resume/types/resume';
 import { Check } from 'lucide-react';
 
-interface ThemePickerProps {
-    currentTemplate: TemplateType;
-    currentColor: string;
-    onSelectTemplate: (t: TemplateType) => void;
-    onSelectColor: (c: string) => void;
-}
+// interface ThemePickerProps {
+//     currentTemplate: TemplateType;
+//     currentColor: string;
+//     onSelectTemplate: (t: TemplateType) => void;
+//     onSelectColor: (c: string) => void;
+// }
 
-const TEMPLATES: { id: TemplateType; label: string }[] = [
+const TEMPLATES = [
     { id: 'classic', label: 'Classic' },
     { id: 'modern', label: 'Modern' },
     { id: 'minimal', label: 'Minimal' },
@@ -24,7 +23,7 @@ const COLORS = [
     { label: 'Charcoal', value: '#1f2937' },  // gray-800
 ];
 
-export default function ThemePicker({ currentTemplate, currentColor, onSelectTemplate, onSelectColor }: ThemePickerProps) {
+export default function ThemePicker({ currentTemplate, currentColor, onSelectTemplate, onSelectColor }) {
     return (
         <div className="bg-white p-4 rounded-md shadow-sm border border-gray-200 mb-6 space-y-4">
             {/* Template Selection */}
@@ -36,8 +35,8 @@ export default function ThemePicker({ currentTemplate, currentColor, onSelectTem
                             key={t.id}
                             onClick={() => onSelectTemplate(t.id)}
                             className={`relative group w-24 h-32 rounded-md border-2 transition-all overflow-hidden ${currentTemplate === t.id
-                                    ? 'border-accent ring-2 ring-accent ring-opacity-20'
-                                    : 'border-gray-200 hover:border-gray-300'
+                                ? 'border-accent ring-2 ring-accent ring-opacity-20'
+                                : 'border-gray-200 hover:border-gray-300'
                                 }`}
                         >
                             {/* Visual Sketch of Template */}
@@ -85,8 +84,8 @@ export default function ThemePicker({ currentTemplate, currentColor, onSelectTem
                             onClick={() => onSelectColor(c.value)}
                             title={c.label}
                             className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${currentColor === c.value
-                                    ? 'border-gray-900 scale-110'
-                                    : 'border-transparent hover:scale-110'
+                                ? 'border-gray-900 scale-110'
+                                : 'border-transparent hover:scale-110'
                                 }`}
                             style={{ backgroundColor: c.value }}
                         >

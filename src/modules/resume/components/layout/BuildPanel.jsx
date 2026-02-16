@@ -1,16 +1,15 @@
-'use client';
 
 import { useState, useEffect } from 'react';
 import { Copy, ExternalLink, CheckCircle, XCircle, Image as ImageIcon } from 'lucide-react';
 
-interface BuildPanelProps {
-    stepId: string;
-    stepContent: string;
-    lovableLink?: string;
-}
+// interface BuildPanelProps {
+//     stepId: string;
+//     stepContent: string;
+//     lovableLink?: string;
+// }
 
-export default function BuildPanel({ stepId, stepContent, lovableLink = "https://lovable.dev/project/new" }: BuildPanelProps) {
-    const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+export default function BuildPanel({ stepId, stepContent, lovableLink = "https://lovable.dev/project/new" }) {
+    const [status, setStatus] = useState < 'idle' | 'success' | 'error' > ('idle');
     const [screenshot, setScreenshot] = useState('');
     const [copied, setCopied] = useState(false);
 
@@ -78,8 +77,8 @@ export default function BuildPanel({ stepId, stepContent, lovableLink = "https:/
                     <button
                         onClick={() => setStatus('success')}
                         className={`flex items-center justify-center gap-2 py-3 rounded-sm border text-sm font-medium ${status === 'success'
-                                ? 'bg-[#E8F5E9] border-[#2E7D32] text-[#2E7D32]'
-                                : 'border-main bg-card text-muted'
+                            ? 'bg-[#E8F5E9] border-[#2E7D32] text-[#2E7D32]'
+                            : 'border-main bg-card text-muted'
                             }`}
                     >
                         <CheckCircle size={16} />
@@ -89,8 +88,8 @@ export default function BuildPanel({ stepId, stepContent, lovableLink = "https:/
                     <button
                         onClick={() => setStatus('error')}
                         className={`flex items-center justify-center gap-2 py-3 rounded-sm border text-sm font-medium ${status === 'error'
-                                ? 'bg-[#FFEBEE] border-[#C62828] text-[#C62828]'
-                                : 'border-main bg-card text-muted'
+                            ? 'bg-[#FFEBEE] border-[#C62828] text-[#C62828]'
+                            : 'border-main bg-card text-muted'
                             }`}
                     >
                         <XCircle size={16} />

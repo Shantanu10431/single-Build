@@ -1,21 +1,21 @@
-'use client';
 
-import { ProjectItem } from '@/types/resume';
+
+// import { ProjectItem } from '@/modules/resume/types/resume';
 import { Plus, Trash2, ChevronDown, ChevronUp, Github, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
-import TagInput from '@/components/ui/TagInput';
-import Guidance from '@/components/builder/Guidance';
+import TagInput from '@/modules/resume/components/ui/TagInput';
+import Guidance from '@/modules/resume/components/builder/Guidance';
 
-interface ProjectsEditorProps {
-    projects: ProjectItem[];
-    updateProjects: (projects: ProjectItem[]) => void;
-}
+// interface ProjectsEditorProps {
+//     projects: ProjectItem[];
+//     updateProjects: (projects: ProjectItem[]) => void;
+// }
 
-export default function ProjectsEditor({ projects, updateProjects }: ProjectsEditorProps) {
-    const [expandedId, setExpandedId] = useState<string | null>(null);
+export default function ProjectsEditor({ projects, updateProjects }) {
+    const [expandedId, setExpandedId] = useState(null);
 
     const addProject = () => {
-        const newProject: ProjectItem = {
+        const newProject = {
             id: Date.now().toString(),
             name: 'New Project',
             description: '',
@@ -25,13 +25,13 @@ export default function ProjectsEditor({ projects, updateProjects }: ProjectsEdi
         setExpandedId(newProject.id);
     };
 
-    const removeProject = (id: string) => {
+    const removeProject = (id) => {
         updateProjects(projects.filter(p => p.id !== id));
         if (expandedId === id) setExpandedId(null);
     };
 
-    const updateProject = (id: string, updates: Partial<ProjectItem>) => {
-        updateProjects(projects.map(p => p.id === id ? { ...p, ...updates } : p));
+    const handleChange = (id, field, value) => {
+        updateProjects(projects.map(p => p.id === id ? { ...p, [field]: value } : p));
     };
 
     return (

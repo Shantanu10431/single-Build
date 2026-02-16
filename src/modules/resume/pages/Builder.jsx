@@ -1,37 +1,39 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import AppNavbar from '../components/layout/AppNavbar';
-import PersonalInfoForm from '../components/builder/PersonalInfoForm';
-import ResumePreview from '../components/builder/ResumePreview';
-import ScorePanel from '../components/builder/ScorePanel';
-import ThemePicker from '../components/builder/ThemePicker';
-import Guidance from '../components/builder/Guidance';
-import SkillsEditor from '../components/builder/SkillsEditor';
-import ProjectsEditor from '../components/builder/ProjectsEditor';
-// Adjust types import if needed, assuming types are copied
-// In JS, we remove type annotations, but keep imports if they export values. 
-// However, these seem to be TS types. If they are just interfaces, we can remove the import.
-// But INITIAL_RESUME_DATA etc are values.
-import { INITIAL_RESUME_DATA, SAMPLE_RESUME_DATA } from '../types/resume';
-import { calculateATSScore } from '../lib/scoring';
+
+
+import { useState, useEffect, useMemo } from 'react';
+import AppNavbar from '@/modules/resume/components/layout/AppNavbar';
+import PersonalInfoForm from '@/modules/resume/components/builder/PersonalInfoForm';
+import ResumePreview from '@/modules/resume/components/builder/ResumePreview';
+import ScorePanel from '@/modules/resume/components/builder/ScorePanel';
+import ThemePicker from '@/modules/resume/components/builder/ThemePicker';
+import Guidance from '@/modules/resume/components/builder/Guidance';
+import SkillsEditor from '@/modules/resume/components/builder/SkillsEditor';
+import ProjectsEditor from '@/modules/resume/components/builder/ProjectsEditor';
+import { INITIAL_RESUME_DATA, SAMPLE_RESUME_DATA } from '@/modules/resume/types/resume';
+import { calculateATSScore } from '@/modules/resume/lib/scoring';
 import { Save, Download, RotateCcw, Plus, Trash2 } from 'lucide-react';
 
 export default function BuilderPage() {
-    const [data, setData] = useState(() => {
-        try {
-            const saved = localStorage.getItem('resumeBuilderData');
-            if (saved) {
+    const [data, setData] = useState(INITIAL_RESUME_DATA);
+    const [loaded, setLoaded] = useState(false);
+
+    // Persistence: Load
+    useEffect(() => {
+        const saved = localStorage.getItem('resumeBuilderData');
+        if (saved) {
+            try {
                 const parsedData = JSON.parse(saved);
 
                 // Migration: Check if skills is an array (Legacy)
                 if (Array.isArray(parsedData.skills)) {
                     parsedData.skills = {
-                        technical: parsedData.skills,
+                        technical: parsedData.skills, // Move old skills to technical
                         soft: [],
                         tools: []
                     };
                 }
 
-                // Migration: Projects
+                // Migration: Projects (techStack string -> technologies array)
                 if (parsedData.projects) {
                     parsedData.projects = parsedData.projects.map((p) => ({
                         ...p,
@@ -44,18 +46,9 @@ export default function BuilderPage() {
                     parsedData.template = 'classic';
                 }
 
-                return parsedData;
-            }
-        } catch (e) {
-            console.error('Failed to load resume data', e);
+                setData(parsedData);
+            } catch (e) { console.error('Failed to load resume data', e); }
         }
-        return INITIAL_RESUME_DATA;
-    });
-
-    const [loaded, setLoaded] = useState(false);
-
-    useEffect(() => {
-        // eslint-disable-next-line
         setLoaded(true);
     }, []);
 

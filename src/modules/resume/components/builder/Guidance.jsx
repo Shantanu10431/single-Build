@@ -1,15 +1,15 @@
-'use client';
+
 
 import { Lightbulb } from 'lucide-react';
 
-interface GuidanceProps {
-    text: string;
-}
+// interface GuidanceProps {
+//     text: string;
+// }
 
-export default function Guidance({ text }: GuidanceProps) {
+export default function Guidance({ text }) {
     if (!text) return null;
 
-    const suggestions: string[] = [];
+    const suggestions = [];
 
     // 1. Action Verb Check
     const actionVerbs = /^(Built|Developed|Designed|Implemented|Led|Improved|Created|Optimized|Automated|Managed|Engineered|Architected|Launched)/i;

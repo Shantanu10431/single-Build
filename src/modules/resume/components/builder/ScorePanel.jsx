@@ -1,13 +1,13 @@
-'use client';
 
-import { ATSScore } from '@/lib/scoring';
+
+// import { ATSScore } from '@/modules/resume/lib/scoring';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 
-interface ScorePanelProps {
-    scoreData: ATSScore;
-}
+// interface ScorePanelProps {
+//     scoreData: ATSScore;
+// }
 
-export default function ScorePanel({ scoreData }: ScorePanelProps) {
+export default function ScorePanel({ scoreData }) {
     const { score, suggestions } = scoreData;
 
     // Determine color based on score

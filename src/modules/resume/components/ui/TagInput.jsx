@@ -1,19 +1,11 @@
-'use client';
 
 import { X } from 'lucide-react';
 import { useState, KeyboardEvent } from 'react';
 
-interface TagInputProps {
-    placeholder?: string;
-    tags: string[];
-    onAdd: (tag: string) => void;
-    onRemove: (tag: string) => void;
-}
-
-export default function TagInput({ placeholder, tags, onAdd, onRemove }: TagInputProps) {
+export default function TagInput({ tags, onTagsChange, placeholder = "Add tag...", label, suggestions = [] }) {
     const [input, setInput] = useState('');
 
-    const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
             if (input.trim()) {

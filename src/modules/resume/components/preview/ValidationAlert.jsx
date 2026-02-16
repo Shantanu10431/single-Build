@@ -1,16 +1,15 @@
-'use client';
 
 import { AlertTriangle, X } from 'lucide-react';
 import { useState } from 'react';
 
-interface ValidationAlertProps {
-    missingFields: string[];
-}
+// interface ValidationAlertProps {
+//     missingFields: string[];
+// }
 
-export default function ValidationAlert({ missingFields }: ValidationAlertProps) {
+export default function ValidationAlert({ suggestions = [] }) {
     const [visible, setVisible] = useState(true);
 
-    if (!visible || missingFields.length === 0) return null;
+    if (!visible || suggestions.length === 0) return null;
 
     return (
         <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-sm flex items-start justify-between print:hidden max-w-[816px] w-full mx-auto">

@@ -1,19 +1,18 @@
-'use client';
 
 import { useState } from 'react';
-import { Skills } from '@/types/resume';
-import TagInput from '@/components/ui/TagInput';
+// import { Skills } from '@/modules/resume/types/resume';
+import TagInput from '@/modules/resume/components/ui/TagInput';
 import { Sparkles, Loader2 } from 'lucide-react';
 
-interface SkillsEditorProps {
-    skills: Skills;
-    updateSkills: (skills: Skills) => void;
-}
+// interface SkillsEditorProps {
+//     skills: Skills;
+//     updateSkills: (skills: Skills) => void;
+// }
 
-export default function SkillsEditor({ skills, updateSkills }: SkillsEditorProps) {
+export default function SkillsEditor({ skills, updateSkills }) {
     const [loading, setLoading] = useState(false);
 
-    const handleAdd = (category: keyof Skills, tag: string) => {
+    const handleAdd = (category, tag) => {
         if (!skills[category].includes(tag)) {
             updateSkills({
                 ...skills,
@@ -22,7 +21,7 @@ export default function SkillsEditor({ skills, updateSkills }: SkillsEditorProps
         }
     };
 
-    const handleRemove = (category: keyof Skills, tag: string) => {
+    const handleRemove = (category, tag) => {
         updateSkills({
             ...skills,
             [category]: skills[category].filter(t => t !== tag)

@@ -1,15 +1,17 @@
-import { Link, useLocation } from 'react-router-dom';
+
+
+import { Link } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 export default function AppNavbar() {
-    const location = useLocation();
-    const pathname = location.pathname;
+    const { pathname } = useLocation();
 
     const isActive = (path) => pathname === path;
 
     return (
         <nav className="fixed top-0 left-0 right-0 h-[80px] bg-main border-b border-main z-50 px-8 flex items-center justify-between print:hidden">
             <div className="flex items-center gap-8">
-                <Link to="/resume" className="text-xl font-bold tracking-tight text-main" style={{ fontFamily: 'var(--font-serif)' }}>
+                <Link to="/" className="text-xl font-bold tracking-tight text-main" style={{ fontFamily: 'var(--font-serif)' }}>
                     AI Resume Builder
                 </Link>
                 <div className="h-6 w-px bg-border mx-2"></div>

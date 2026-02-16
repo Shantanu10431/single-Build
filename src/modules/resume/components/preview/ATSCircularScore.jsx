@@ -1,15 +1,14 @@
-'use client';
 
-import { ATSScore } from '@/lib/scoring';
+// import { ATSScore } from '@/modules/resume/lib/scoring';
 import { AlertTriangle, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 
-interface ATSCircularScoreProps {
-    scoreData: ATSScore;
-    className?: string;
-}
+// interface ATSCircularScoreProps {
+//     score: number;
+//     size?: number;
+// }
 
-export default function ATSCircularScore({ scoreData, className = '' }: ATSCircularScoreProps) {
+export default function ATSCircularScore({ scoreData, size = 60 }) {
     const { score, suggestions } = scoreData;
     const [isExpanded, setIsExpanded] = useState(true);
 

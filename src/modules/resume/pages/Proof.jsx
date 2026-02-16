@@ -1,5 +1,6 @@
-import React from 'react';
-import AppNavbar from '../components/layout/AppNavbar';
+
+
+import AppNavbar from '@/modules/resume/components/layout/AppNavbar';
 
 export default function ProofPage() {
     return (

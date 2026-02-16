@@ -1,10 +1,11 @@
-import React from 'react';
+
+
 import { useLocation } from 'react-router-dom';
 import TopBar from './TopBar';
 import ProofFooter from './ProofFooter';
 import ContextHeader from './ContextHeader';
 
-const STEP_DATA = {
+const STEP_DATA: Record<number, { title: string; description: string }> = {
     1: { title: "Step 1: Define the Problem", description: "Clearly articulate the user's pain points and the solution's value proposition." },
     2: { title: "Step 2: Market Analysis", description: "Understand the competitive landscape and identify your unique advantage." },
     3: { title: "Step 3: App Architecture", description: "Define the technical foundation and data flow of your application." },
@@ -15,18 +16,16 @@ const STEP_DATA = {
     8: { title: "Step 8: Ship & Deploy", description: "Launch your application to the world. Ensure everything is production-ready." },
 };
 
-export default function RBLayoutShell({ children }) {
-    const location = useLocation();
-    const pathname = location.pathname;
+export default function RBLayoutShell({ children }: { children: React.ReactNode }) {
+    const { pathname } = useLocation();
 
-    const getStepNumber = (path) => {
-        // Matches /rb/01-, or /placement/rb/01-
+    const getStepNumber = (path: string) => {
         const match = path.match(/\/rb\/(\d+)-/);
         return match ? parseInt(match[1], 10) : 0;
     };
 
     const currentStep = getStepNumber(pathname);
-    const isProofPage = pathname === '/resume/proof' || pathname === '/placement/rb/proof';
+    const isProofPage = pathname === '/rb/proof';
     const stepData = STEP_DATA[currentStep];
 
     return (

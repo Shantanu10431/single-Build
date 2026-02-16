@@ -1,14 +1,13 @@
-'use client';
 
-import { ResumeData } from '@/types/resume';
+// import { ResumeData } from '@/modules/resume/types/resume';
 
-interface FormSectionProps {
-    data: ResumeData;
-    updateData: (newData: ResumeData) => void;
-}
+// interface FormSectionProps {
+//     data: ResumeData;
+//     updateData: (newData: ResumeData) => void;
+// }
 
-export default function PersonalInfoForm({ data, updateData }: FormSectionProps) {
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+export default function PersonalInfoForm({ data, updateData }) {
+    const handleChange = (e) => {
         const { name, value } = e.target;
         updateData({
             ...data,

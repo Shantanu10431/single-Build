@@ -1,19 +1,14 @@
-'use client';
 
-import { ResumeData, TemplateType } from '@/types/resume';
+
+// import { ResumeData, TemplateType } from '@/modules/resume/types/resume';
 import { MapPin, Mail, Phone, ExternalLink, Github, Linkedin, Briefcase, GraduationCap, Code, Globe } from 'lucide-react';
 
-interface ResumePreviewProps {
-    data: ResumeData;
-    scale?: number;
-}
-
-export default function ResumePreview({ data }: ResumePreviewProps) {
+export default function ResumePreview({ data }) {
     const { personalInfo, summary, experience, education, projects, skills, template } = data;
     const accentColor = data.accentColor || '#0d9488'; // Default Teal
 
     // Template Configurations
-    const getStyles = (tpl: TemplateType = 'classic') => {
+    const getStyles = (tpl = 'classic') => {
         switch (tpl) {
             case 'modern':
                 return {

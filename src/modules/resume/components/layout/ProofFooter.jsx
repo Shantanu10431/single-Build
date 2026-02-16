@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Check } from 'lucide-react';
@@ -16,38 +17,26 @@ export default function ProofFooter({ currentStep }) {
                     if (data.status === 'success') {
                         completed.push(i);
                     }
-                } catch {
-                    // Ignore parsing errors
-                }
+                } catch (e) { }
             }
         }
         setSteps(completed);
     };
 
     useEffect(() => {
-        // Initial check
-        // eslint-disable-next-line
         checkSteps();
-
-        // Listen for updates
         window.addEventListener('rb_artifact_update', checkSteps);
         return () => window.removeEventListener('rb_artifact_update', checkSteps);
     }, []);
 
     const isCurrentComplete = steps.includes(currentStep);
     const nextStep = currentStep < 8 ? currentStep + 1 : null;
+    const nextStepPath = nextStep ? `/rb/${nextStep.toString().padStart(2, '0')}-${getStepName(nextStep)}` : '/rb/proof';
 
     function getStepName(num) {
         const names = ['problem', 'market', 'architecture', 'hld', 'lld', 'build', 'test', 'ship'];
         return names[num - 1];
     }
-
-    // Adjusted paths to point to /placement/rb/... potentially, or keep relative?
-    // If this is used in Resume Module standalone, these paths might need to be /resume/proof/... but the Resume Module doesn't seem to have these steps.
-    // Assuming this component is shared or used in the Placement flow primarily.
-    // For safety, I'll update them to /placement/rb/... as that's where the stepped builder lives in the unified app.
-    const nextStepPath = nextStep ? `/placement/rb/${nextStep.toString().padStart(2, '0')}-${getStepName(nextStep)}` : '/placement/rb/proof';
-
 
     return (
         <footer className="fixed bottom-0 left-0 right-0 bg-card border-t border-main px-6 flex items-center justify-between z-50" style={{ height: 'var(--footer-height)' }}>
@@ -87,7 +76,7 @@ export default function ProofFooter({ currentStep }) {
                 )}
                 {!nextStep && (
                     <Link
-                        to="/placement/rb/proof"
+                        to="/rb/proof"
                         className={`flex items-center gap-2 px-6 py-2 rounded-sm font-medium transition-all ${isCurrentComplete
                             ? 'bg-accent text-white hover:opacity-90'
                             : 'bg-main text-muted cursor-not-allowed opacity-50 border border-main'

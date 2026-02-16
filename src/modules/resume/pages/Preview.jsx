@@ -1,53 +1,59 @@
-import React, { useState, useEffect } from 'react';
-import AppNavbar from '../components/layout/AppNavbar';
-import ResumePreview from '../components/builder/ResumePreview';
-import ValidationAlert from '../components/preview/ValidationAlert';
-import ATSCircularScore from '../components/preview/ATSCircularScore';
-import { calculateATSScore } from '../lib/scoring';
-import { INITIAL_RESUME_DATA, SAMPLE_RESUME_DATA } from '../types/resume';
+
+
+import { useState, useEffect } from 'react';
+import AppNavbar from '@/modules/resume/components/layout/AppNavbar';
+import ResumePreview from '@/modules/resume/components/builder/ResumePreview';
+import ValidationAlert from '@/modules/resume/components/preview/ValidationAlert';
+import ATSCircularScore from '@/modules/resume/components/preview/ATSCircularScore';
+import { calculateATSScore } from '@/modules/resume/lib/scoring';
+import { SAMPLE_RESUME_DATA, INITIAL_RESUME_DATA } from '@/modules/resume/types/resume';
 import { Printer, Copy, Check } from 'lucide-react';
 
 export default function PreviewPage() {
-    const validateData = (d) => {
-        const missing = [];
-        if (!d.personalInfo.fullName) missing.push("Full Name");
-        if (d.experience.length === 0 && d.projects.length === 0) missing.push("At least one Experience or Project");
-        setMissingFields(missing);
-    };
+    const [data, setData] = useState(INITIAL_RESUME_DATA);
+    const [loaded, setLoaded] = useState(false);
+    const [missingFields, setMissingFields] = useState([]);
+    const [copied, setCopied] = useState(false);
 
-    // eslint-disable-next-line
-    const [data, setData] = useState(() => {
-        try {
-            const saved = localStorage.getItem('resumeBuilderData');
-            if (saved) {
+    // Persistence: Load
+    useEffect(() => {
+        const saved = localStorage.getItem('resumeBuilderData');
+        if (saved) {
+            try {
                 const parsed = JSON.parse(saved);
-                // Migration logic
+                // Migration: Check if skills is an array (Legacy)
                 if (Array.isArray(parsed.skills)) {
-                    parsed.skills = { technical: parsed.skills, soft: [], tools: [] };
+                    parsed.skills = {
+                        technical: parsed.skills, // Move old skills to technical
+                        soft: [],
+                        tools: []
+                    };
                 }
+
+                // Migration: Projects (techStack string -> technologies array)
                 if (parsed.projects) {
                     parsed.projects = parsed.projects.map((p) => ({
                         ...p,
                         technologies: Array.isArray(p.technologies) ? p.technologies : (p.techStack ? p.techStack.split(',').map((s) => s.trim()).filter(Boolean) : [])
                     }));
                 }
-                return parsed;
-            }
-        } catch (e) { console.error('Failed to load resume data', e); }
-        return SAMPLE_RESUME_DATA;
-    });
 
-    const [loaded, setLoaded] = useState(false);
-    const [missingFields, setMissingFields] = useState([]);
-    const [copied, setCopied] = useState(false);
-
-    useEffect(() => {
-        if (data) {
-            validateData(data);
+                setData(parsed);
+                validateData(parsed);
+            } catch (e) { console.error('Failed to load resume data', e); }
+        } else {
+            // Fallback for demo if no data
+            setData(SAMPLE_RESUME_DATA);
         }
-        // eslint-disable-next-line
         setLoaded(true);
-    }, [data]);
+    }, []);
+
+    const validateData = (e) => {
+        const missing = [];
+        if (!e.personalInfo.fullName) missing.push("Full Name");
+        if (e.experience.length === 0 && e.projects.length === 0) missing.push("At least one Experience or Project");
+        setMissingFields(missing);
+    };
 
     const handleCopyText = () => {
         const { personalInfo, summary, experience, projects, education, skills } = data;

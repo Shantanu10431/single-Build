@@ -1,12 +1,11 @@
-'use client';
 
 import { LayoutGrid, Bell } from 'lucide-react';
 
-interface TopBarProps {
-  stepInfo?: string;
-}
+// interface TopBarProps {
+//   stepInfo?: string;
+// }
 
-export default function TopBar({ stepInfo }: TopBarProps) {
+export default function TopBar({ title }) {
   return (
     <header className="fixed top-0 left-0 right-0 bg-main border-b border-main z-50 px-6 flex items-center justify-between" style={{ height: 'var(--header-height)' }}>
       {/* Left */}
