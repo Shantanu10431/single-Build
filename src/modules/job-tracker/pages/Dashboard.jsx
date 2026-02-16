@@ -3,7 +3,7 @@ import { ContextHeader } from '../components/layout/ContextHeader';
 import { FilterBar } from '../components/dashboard/FilterBar';
 import { JobCard } from '../components/dashboard/JobCard';
 import { JOBS } from '../lib/data';
-import { cn } from '../lib/utils';
+import { Input } from '../components/ui/Input';
 import { calculateMatchScore } from '../lib/scoring';
 import { Button } from '../components/ui/Button';
 import { Link } from 'react-router-dom';
@@ -13,7 +13,7 @@ export default function DashboardPage() {
     const [savedIds, setSavedIds] = useState([]);
     const [statusMap, setStatusMap] = useState({});
     const [prefs, setPrefs] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
+    // const [isLoading, setIsLoading] = useState(true); // Unused
 
     // Filter States
     const [search, setSearch] = useState("");
@@ -29,20 +29,26 @@ export default function DashboardPage() {
     // Load Initial Data
     useEffect(() => {
         const saved = localStorage.getItem("kodnest_saved_jobs");
-        if (saved) setSavedIds(JSON.parse(saved));
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            setTimeout(() => setSavedIds(parsed), 0);
+        }
 
         const statusData = localStorage.getItem("jobTrackerStatus");
-        if (statusData) setStatusMap(JSON.parse(statusData));
+        if (statusData) {
+            const parsed = JSON.parse(statusData);
+            setTimeout(() => setStatusMap(parsed), 0);
+        }
 
         const prefString = localStorage.getItem("jobTrackerPreferences");
         if (prefString) {
             try {
-                setPrefs(JSON.parse(prefString));
+                const parsed = JSON.parse(prefString);
+                setTimeout(() => setPrefs(parsed), 0);
             } catch (e) {
                 console.error("Error parsing prefs", e);
             }
         }
-        setIsLoading(false);
     }, []);
 
     const toggleSave = (id) => {
@@ -133,7 +139,7 @@ export default function DashboardPage() {
             />
 
             {/* Preface Banner */}
-            {!prefs && !isLoading && (
+            {!prefs && (
                 <div className="mx-6 mt-6 p-4 bg-warning/10 border border-warning/20 rounded-lg flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <AlertTriangle className="w-5 h-5 text-warning" />

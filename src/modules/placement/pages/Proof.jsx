@@ -86,7 +86,7 @@ export default function ProofPage() {
         try {
             new URL(url);
             return url.trim().length > 0;
-        } catch (_) {
+        } catch {
             return false;
         }
     };
@@ -174,7 +174,7 @@ Core Capabilities:
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
-                            {BUILD_STEPS.map(step => (
+                            {BUILD_STEPS.map((step) => (
                                 <div
                                     key={step.id}
                                     className={cn(

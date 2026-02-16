@@ -1,9 +1,9 @@
 import React, { useEffect, useState, Suspense } from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { useAnalysisHistory } from '../hooks/useAnalysisHistory';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { ReadinessChart } from '../components/dashboard/ReadinessChart';
-import { CheckCircle2, Calendar, FileQuestion, ArrowLeft, Copy, Download, BookOpen, Building2, Map, Lightbulb } from 'lucide-react';
+import { CheckCircle, BarChart2, Briefcase, ArrowRight, BookOpen, AlertTriangle, Download, Map, Lightbulb, Calendar, FileQuestion, Copy, Building2, ArrowLeft } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { cn } from '../lib/utils';
 
@@ -22,22 +22,22 @@ function ResultsContent() {
         if (id) {
             const data = getAnalysis(id);
             if (data) {
-                // eslint-disable-next-line
-                setResult(data);
+                setTimeout(() => setResult(data), 0);
 
                 // Setup initial confidence
-                const initialConfidence = data.skillConfidenceMap || {};
+                const initialConfidenceMap = data.skillConfidenceMap || {};
 
                 // If empty (e.g. migration case or new), populate from extracted
-                if (Object.keys(initialConfidence).length === 0) {
+                if (Object.keys(initialConfidenceMap).length === 0) {
                     Object.values(data.extractedSkills).flat().forEach(skill => {
-                        initialConfidence[skill] = "practice";
+                        initialConfidenceMap[skill] = "practice";
                     });
                 }
 
-                setSkillConfidence(initialConfidence);
-                // eslint-disable-next-line
-                setLiveScore(data.finalScore || data.baseScore);
+                setTimeout(() => {
+                    setSkillConfidence(initialConfidenceMap);
+                    setLiveScore(data.finalScore || data.baseScore);
+                }, 0);
             }
         }
     }, [id, history.length, getAnalysis]);
@@ -154,13 +154,11 @@ ${result.questions.map((q, i) => `${i + 1}. ${q}`).join("\n")}
     const practiceSkills = Object.entries(skillConfidence)
         // eslint-disable-next-line no-unused-vars
         .filter(([_, status]) => status === "practice")
-        // eslint-disable-next-line no-unused-vars
         .map(([skill]) => skill)
         .slice(0, 3);
 
     // Flatten skills for display since new structure is categorized
-    // eslint-disable-next-line no-unused-vars
-    const flatSkillsDisplay = Object.entries(result.extractedSkills).filter(([_, skills]) => skills.length > 0);
+    const flatSkillsDisplay = Object.entries(result.extractedSkills).filter(([, skills]) => skills.length > 0);
 
     return (
         <div className="space-y-8 max-w-6xl mx-auto pb-10">

@@ -14,7 +14,7 @@ export default function LandingPage() {
                 No noise, just relevance.
             </p>
 
-            <Link to="/jobs/settings">
+            <Link to="/jobs/dashboard">
                 <Button className="h-12 px-8 text-base shadow-lg hover:shadow-xl transition-all">
                     Start Tracking
                 </Button>

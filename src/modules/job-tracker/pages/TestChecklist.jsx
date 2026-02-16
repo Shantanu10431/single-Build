@@ -20,18 +20,17 @@ const TEST_ITEMS = [
 
 export default function TestChecklistPage() {
     const [checkedItems, setCheckedItems] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const saved = localStorage.getItem("jobTrackerTests");
         if (saved) {
             try {
-                setCheckedItems(JSON.parse(saved));
+                const parsed = JSON.parse(saved);
+                setTimeout(() => setCheckedItems(parsed), 0);
             } catch (e) {
                 console.error("Error parsing tests", e);
             }
         }
-        setIsLoading(false);
     }, []);
 
     const toggleItem = (id) => {
@@ -112,7 +111,7 @@ export default function TestChecklistPage() {
 
                 {/* Checklist */}
                 <div className="bg-card border rounded-lg shadow-sm">
-                    {TEST_ITEMS.map((item, index) => {
+                    {TEST_ITEMS.map((item) => { // Changed to map TEST_ITEMS directly
                         const isChecked = checkedItems.includes(item.id);
                         return (
                             <div

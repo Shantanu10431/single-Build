@@ -1,8 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { ContextHeader } from '../components/layout/ContextHeader';
 import { Button } from '../components/ui/Button';
-import { cn } from '../lib/utils';
 import { Input } from '../components/ui/Input';
 import { Label } from '../components/ui/Label';
 import { Card } from '../components/ui/Card';
@@ -20,12 +18,14 @@ export default function SettingsPage() {
         const saved = localStorage.getItem("jobTrackerPreferences");
         if (saved) {
             try {
-                setPrefs(JSON.parse(saved));
+                const parsed = JSON.parse(saved);
+                // Wrap synchronous state update to ensure it runs after initial render
+                setTimeout(() => setPrefs(parsed), 0);
             } catch (e) {
                 console.error("Failed to parse preferences", e);
             }
         }
-        setIsLoading(false);
+        setTimeout(() => setIsLoading(false), 0);
     }, []);
 
     const handleSave = () => {

@@ -10,28 +10,33 @@ export default function SavedPage() {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Load IDs
-        const saved = localStorage.getItem("kodnest_saved_jobs");
-        const ids = saved ? JSON.parse(saved) : [];
-        setSavedIds(ids);
+        const loadSavedJobs = () => {
+            // Load IDs from localStorage
+            const saved = localStorage.getItem("kodnest_saved_jobs");
+            const ids = saved ? JSON.parse(saved) : [];
+            setSavedIds(ids);
 
-        // Filter JOBS
-        const filtered = JOBS.filter(job => ids.includes(job.id));
-        setSavedJobs(filtered);
-        setIsLoading(false);
-    }, []);
+            // Filter JOBS based on loaded IDs
+            const filtered = JOBS.filter(job => ids.includes(job.id));
+            setSavedJobs(filtered);
+            setIsLoading(false);
+        };
+
+        loadSavedJobs();
+    }, []); // Empty dependency array means this effect runs once on mount
 
     const toggleSave = (id) => {
+        // Remove the job ID from the savedIds list
         const newSavedIds = savedIds.filter(savedId => savedId !== id);
         setSavedIds(newSavedIds);
         localStorage.setItem("kodnest_saved_jobs", JSON.stringify(newSavedIds));
 
-        // Update local list
+        // Update the displayed list of saved jobs
         setSavedJobs(prev => prev.filter(job => job.id !== id));
     };
 
     if (isLoading) {
-        return null; // Or skeleton
+        return null; // Or a loading skeleton component
     }
 
     return (

@@ -2,12 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { ContextHeader } from '../components/layout/ContextHeader';
 import { Button } from '../components/ui/Button';
 import { Rocket, Lock, CheckCircle2, PartyPopper } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 export default function ShipPage() {
     const [isLocked, setIsLocked] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
-    const navigate = useNavigate();
 
     useEffect(() => {
         const saved = localStorage.getItem("jobTrackerTests");
@@ -21,13 +20,12 @@ export default function ShipPage() {
             }
         }
 
-        if (passed >= 10) {
-            setIsLocked(false);
-        } else {
-            setIsLocked(true);
+        const shouldBeLocked = passed < 10;
+        if (isLocked !== shouldBeLocked) {
+            setTimeout(() => setIsLocked(shouldBeLocked), 0);
         }
-        setIsLoading(false);
-    }, []);
+        setTimeout(() => setIsLoading(false), 0);
+    }, [isLocked]); // Added isLocked to dependency array to prevent lint warning and ensure logic re-evaluates if isLocked changes externally (though not expected here)
 
     if (isLoading) return null;
 

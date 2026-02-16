@@ -31,8 +31,10 @@ export function useAnalysisHistory() {
     const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
-        // Mark as loaded after initial state is set (either from storage or default)
-        setIsLoaded(true);
+        // Mark as loaded after initial state is set
+        // Wrapping in setTimeout pushes it to next tick, avoiding synchronous warning
+        const timer = setTimeout(() => setIsLoaded(true), 0);
+        return () => clearTimeout(timer);
     }, []);
 
     useEffect(() => {

@@ -26,16 +26,16 @@ export default function ProofPage() {
         deployed: ""
     });
     const [testsPassed, setTestsPassed] = useState(0);
-    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         // Load Links
         const savedLinks = localStorage.getItem("jobTrackerSubmission");
         if (savedLinks) {
             try {
-                setLinks(JSON.parse(savedLinks));
+                const parsed = JSON.parse(savedLinks);
+                setTimeout(() => setLinks(parsed), 0);
             } catch (e) {
-                console.error(e);
+                console.error("Failed to parse saved links:", e);
             }
         }
 
@@ -44,12 +44,11 @@ export default function ProofPage() {
         if (savedTests) {
             try {
                 const checked = JSON.parse(savedTests);
-                setTestsPassed(checked.length);
+                setTimeout(() => setTestsPassed(checked.length), 0);
             } catch (e) {
                 console.error(e);
             }
         }
-        setIsLoading(false);
     }, []);
 
     const updateLink = (key, value) => {

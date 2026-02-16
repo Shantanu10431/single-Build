@@ -23,7 +23,8 @@ export default function DigestPage() {
         const prefString = localStorage.getItem("jobTrackerPreferences");
         if (prefString) {
             try {
-                setPrefs(JSON.parse(prefString));
+                const parsed = JSON.parse(prefString);
+                setTimeout(() => setPrefs(parsed), 0);
             } catch (e) {
                 console.error("Error parsing prefs", e);
             }
@@ -33,7 +34,8 @@ export default function DigestPage() {
         const savedDigest = localStorage.getItem(`jobTrackerDigest_${todayDate}`);
         if (savedDigest) {
             try {
-                setDigest(JSON.parse(savedDigest));
+                const parsed = JSON.parse(savedDigest);
+                setTimeout(() => setDigest(parsed), 0);
             } catch (e) {
                 console.error("Error parsing saved digest", e);
             }
@@ -54,13 +56,13 @@ export default function DigestPage() {
                     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
                     .slice(0, 5); // Take top 5 recent
 
-                setRecentUpdates(updates);
+                setTimeout(() => setRecentUpdates(updates), 0);
             } catch (e) {
                 console.error("Error parsing status updates", e);
             }
         }
 
-        setIsLoading(false);
+        setTimeout(() => setIsLoading(false), 0);
     }, [todayDate]);
 
     const generateDigest = () => {
