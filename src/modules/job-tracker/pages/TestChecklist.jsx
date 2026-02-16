@@ -1,122 +1,161 @@
+import React, { useState, useEffect } from 'react';
+import { ContextHeader } from '../components/layout/ContextHeader';
+import { Button } from '../components/ui/Button';
+import { CheckCircle2, AlertTriangle, ShieldCheck, RefreshCw, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { cn } from '../lib/utils';
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+const TEST_ITEMS = [
+    { id: "t1", label: "Preferences persist after refresh", help: "Set preferences in Settings, refresh page, verify they are still there." },
+    { id: "t2", label: "Match score calculates correctly", help: "Check if jobs have scores based on your keywords." },
+    { id: "t3", label: "\"Show only matches\" toggle works", help: "Toggle on dashboard, ensure low scores disappear." },
+    { id: "t4", label: "Save job persists after refresh", help: "Save a job, refresh, check Saved tab." },
+    { id: "t5", label: "Apply opens in new tab", help: "Click Apply button, ensure new tab opens." },
+    { id: "t6", label: "Status update persists after refresh", help: "Change status (Applied), refresh, check status." },
+    { id: "t7", label: "Status filter works correctly", help: "Filter by 'Applied', ensure only applied jobs show." },
+    { id: "t8", label: "Digest generates top 10 by score", help: "Go to Digest, click Generate, count items." },
+    { id: "t9", label: "Digest persists for the day", help: "Refresh Digest page, ensure same jobs show." },
+    { id: "t10", label: "No console errors on main pages", help: "Open DevTools (F12) > Console. Check for red errors." },
+];
 
-export default function TestChecklist() {
-    const navigate = useNavigate();
-    const [checklist, setChecklist] = useState(() => {
-        const saved = localStorage.getItem('jobTrackerTestChecklist');
-        return saved ? JSON.parse(saved) : {
-            preferencesPersist: false,
-            matchScoreCalculates: false,
-            showMatchesToggle: false,
-            saveJobPersists: false,
-            applyOpensNewTab: false,
-            statusUpdatePersists: false,
-            statusFilterWorks: false,
-            digestGenerates: false,
-            digestPersists: false,
-            noConsoleErrors: false
-        };
-    });
+export default function TestChecklistPage() {
+    const [checkedItems, setCheckedItems] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const handleCheck = (key) => {
-        const updated = { ...checklist, [key]: !checklist[key] };
-        setChecklist(updated);
-        localStorage.setItem('jobTrackerTestChecklist', JSON.stringify(updated));
+    useEffect(() => {
+        const saved = localStorage.getItem("jobTrackerTests");
+        if (saved) {
+            try {
+                setCheckedItems(JSON.parse(saved));
+            } catch (e) {
+                console.error("Error parsing tests", e);
+            }
+        }
+        setIsLoading(false);
+    }, []);
+
+    const toggleItem = (id) => {
+        const newChecked = checkedItems.includes(id)
+            ? checkedItems.filter(i => i !== id)
+            : [...checkedItems, id];
+
+        setCheckedItems(newChecked);
+        localStorage.setItem("jobTrackerTests", JSON.stringify(newChecked));
     };
 
-    const handleReset = () => {
-        if (window.confirm("Are you sure you want to reset the test status?")) {
-            const reset = Object.keys(checklist).reduce((acc, key) => ({ ...acc, [key]: false }), {});
-            setChecklist(reset);
-            localStorage.setItem('jobTrackerTestChecklist', JSON.stringify(reset));
+    const resetTests = () => {
+        if (confirm("Reset all test progress?")) {
+            setCheckedItems([]);
+            localStorage.removeItem("jobTrackerTests");
         }
     };
 
-    const completedCount = Object.values(checklist).filter(Boolean).length;
-    const totalCount = Object.keys(checklist).length;
-    const isComplete = completedCount === totalCount;
-
-    const items = [
-        { key: 'preferencesPersist', label: 'Preferences persist after refresh', hint: 'Change settings, refresh page, verify settings remain.' },
-        { key: 'matchScoreCalculates', label: 'Match score calculates correctly', hint: 'Check if green/amber badges appear on likely matches.' },
-        { key: 'showMatchesToggle', label: '"Show only matches" toggle works', hint: 'Enable toggle, ensure low-scoring jobs disappear.' },
-        { key: 'saveJobPersists', label: 'Save job persists after refresh', hint: 'Save a job, refresh, check Saved page.' },
-        { key: 'applyOpensNewTab', label: 'Apply opens in new tab', hint: 'Click Apply, ensure new tab opens.' },
-        { key: 'statusUpdatePersists', label: 'Status update persists after refresh', hint: 'Set status to Applied, refresh, verify.' },
-        { key: 'statusFilterWorks', label: 'Status filter works correctly', hint: 'Filter by Applied, ensure only Applied jobs show.' },
-        { key: 'digestGenerates', label: 'Digest generates top 10 by score', hint: 'Generate digest, verify it has 10 high-scoring jobs.' },
-        { key: 'digestPersists', label: 'Digest persists for the day', hint: 'Refresh Digest page, ensure same list loads.' },
-        { key: 'noConsoleErrors', label: 'No console errors on main pages', hint: 'Open DevTools (F12) and browse pages.' }
-    ];
+    const isComplete = TEST_ITEMS.every(item => checkedItems.includes(item.id));
+    const progress = Math.round((checkedItems.length / TEST_ITEMS.length) * 100);
 
     return (
-        <div className="kn-route-page" style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: 'var(--kn-space-4)' }}>
-                <h1 className="kn-route-page__title">Pre-Flight Test Checklist</h1>
-                <p className="kn-route-page__subtext">Verify all features before shipping.</p>
-            </div>
+        <div className="bg-background min-h-screen pb-20 job-tracker-layout">
+            <ContextHeader
+                title="System Verification"
+                description="Pre-flight checklist before shipping."
+            />
 
-            <div className="kn-card" style={{ padding: 'var(--kn-space-4)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--kn-space-3)' }}>
-                    <h3 style={{ margin: 0 }}>Tests Passed: {completedCount} / {totalCount}</h3>
-                    {!isComplete && <span style={{ color: 'var(--kn-accent)', fontWeight: 600 }}>Resolve all issues before shipping.</span>}
-                </div>
+            <main className="max-w-3xl mx-auto px-6 py-10">
 
-                {/* Progress Bar */}
-                <div style={{ height: '8px', background: '#eee', borderRadius: '4px', marginBottom: 'var(--kn-space-4)', overflow: 'hidden' }}>
-                    <div style={{
-                        height: '100%',
-                        width: `${(completedCount / totalCount) * 100}%`,
-                        background: isComplete ? '#28a745' : 'var(--kn-accent)',
-                        transition: 'width 0.3s ease'
-                    }} />
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--kn-space-3)' }}>
-                    {items.map(({ key, label, hint }) => (
-                        <div key={key} style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--kn-space-3)', paddingBottom: 'var(--kn-space-2)', borderBottom: '1px solid #f0f0f0' }}>
-                            <input
-                                type="checkbox"
-                                checked={checklist[key]}
-                                onChange={() => handleCheck(key)}
-                                style={{ marginTop: '4px', width: '18px', height: '18px', cursor: 'pointer' }}
-                            />
-                            <div>
-                                <label
-                                    style={{
-                                        fontSize: '16px',
-                                        fontWeight: 500,
-                                        cursor: 'pointer',
-                                        textDecoration: checklist[key] ? 'line-through' : 'none',
-                                        color: checklist[key] ? 'var(--kn-text-muted)' : 'inherit'
-                                    }}
-                                    onClick={() => handleCheck(key)}
-                                >
-                                    {label}
-                                </label>
-                                <p style={{ margin: 0, fontSize: '13px', color: 'var(--kn-text-muted)', marginTop: '2px' }}>{hint}</p>
-                            </div>
+                {/* Status Card */}
+                <div className={cn(
+                    "mb-8 p-6 rounded-lg border flex flex-col md:flex-row justify-between items-center gap-6",
+                    isComplete
+                        ? "bg-green-50/50 border-green-200"
+                        : "bg-amber-50/50 border-amber-200"
+                )}>
+                    <div>
+                        <div className="flex items-center gap-3 mb-2">
+                            {isComplete ? (
+                                <ShieldCheck className="w-8 h-8 text-green-600" />
+                            ) : (
+                                <AlertTriangle className="w-8 h-8 text-amber-600" />
+                            )}
+                            <h2 className={cn(
+                                "text-2xl font-serif font-bold",
+                                isComplete ? "text-green-800" : "text-amber-800"
+                            )}>
+                                {isComplete ? "Ready to Ship" : "Verification Pending"}
+                            </h2>
                         </div>
-                    ))}
+                        <p className={cn(
+                            "text-sm font-medium",
+                            isComplete ? "text-green-700" : "text-amber-700"
+                        )}>
+                            {checkedItems.length} / {TEST_ITEMS.length} Tests Passed ({progress}%)
+                        </p>
+                    </div>
+
+                    <div className="flex gap-3">
+                        <Button variant="secondary" onClick={resetTests} title="Reset Progress">
+                            <RefreshCw className="w-4 h-4 mr-2" /> Reset
+                        </Button>
+
+                        {isComplete ? (
+                            <Link to="/jobs/prp/08-ship">
+                                <Button className="bg-green-600 hover:bg-green-700 text-white border-transparent">
+                                    Ship It <ArrowRight className="w-4 h-4 ml-2" />
+                                </Button>
+                            </Link>
+                        ) : (
+                            <Button disabled className="opacity-50 cursor-not-allowed">
+                                Resolve All Issues
+                            </Button>
+                        )}
+                    </div>
                 </div>
 
-                <div style={{ marginTop: 'var(--kn-space-4)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <button onClick={handleReset} className="kn-btn kn-btn--secondary" style={{ fontSize: '13px' }}>
-                        Reset Test Status
-                    </button>
+                {/* Checklist */}
+                <div className="bg-card border rounded-lg shadow-sm">
+                    {TEST_ITEMS.map((item, index) => {
+                        const isChecked = checkedItems.includes(item.id);
+                        return (
+                            <div
+                                key={item.id}
+                                onClick={() => toggleItem(item.id)}
+                                className={cn(
+                                    "flex items-start gap-4 p-4 border-b last:border-0 cursor-pointer transition-colors hover:bg-muted/30",
+                                    isChecked && "bg-muted/5"
+                                )}
+                            >
+                                <div className={cn(
+                                    "mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors",
+                                    isChecked
+                                        ? "bg-primary border-primary text-primary-foreground"
+                                        : "border-muted-foreground/30 bg-background"
+                                )}>
+                                    {isChecked && <CheckCircle2 className="w-3.5 h-3.5" />}
+                                </div>
 
-                    <button
-                        onClick={() => navigate('/jt/08-ship')}
-                        className={`kn-btn ${isComplete ? 'kn-btn--primary' : 'kn-btn--secondary'}`}
-                        disabled={!isComplete}
-                        style={{ opacity: isComplete ? 1 : 0.6, cursor: isComplete ? 'pointer' : 'not-allowed' }}
-                    >
-                        {isComplete ? '🚀 Proceed to Ship' : 'Complete Checklist to Ship'}
-                    </button>
+                                <div className="flex-1">
+                                    <h4 className={cn(
+                                        "font-medium text-sm transition-colors",
+                                        isChecked ? "text-muted-foreground line-through" : "text-foreground"
+                                    )}>
+                                        {item.label}
+                                    </h4>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        {item.help}
+                                    </p>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
-            </div>
+
+                {!isComplete && (
+                    <p className="mt-6 text-center text-sm text-muted-foreground">
+                        <AlertTriangle className="w-4 h-4 inline mr-2 text-amber-500 mb-0.5" />
+                        Please verify every item manually to unlock the shipping page.
+                    </p>
+                )}
+
+            </main>
         </div>
     );
 }

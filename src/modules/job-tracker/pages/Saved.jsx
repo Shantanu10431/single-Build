@@ -1,85 +1,72 @@
+import React, { useState, useEffect } from 'react';
+import { ContextHeader } from '../components/layout/ContextHeader';
+import { JobCard } from '../components/dashboard/JobCard';
+import { JOBS } from '../lib/data';
+import { Bookmark } from 'lucide-react';
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { jobs } from '../data/jobs';
-import JobCard from '../components/JobCard';
-import JobModal from '../components/JobModal';
+export default function SavedPage() {
+    const [savedJobs, setSavedJobs] = useState([]);
+    const [savedIds, setSavedIds] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-export default function Saved() {
-    const [savedJobIds, setSavedJobIds] = useState(() => {
-        return JSON.parse(localStorage.getItem('savedJobs') || '[]');
-    });
-    const [jobStatuses, setJobStatuses] = useState(() => {
-        return JSON.parse(localStorage.getItem('jobTrackerStatus') || '{}');
-    });
-    const [selectedJob, setSelectedJob] = useState(null);
+    useEffect(() => {
+        // Load IDs
+        const saved = localStorage.getItem("kodnest_saved_jobs");
+        const ids = saved ? JSON.parse(saved) : [];
+        setSavedIds(ids);
 
-    const handleSave = (jobId) => {
-        let updatedSaved;
-        if (savedJobIds.includes(jobId)) {
-            updatedSaved = savedJobIds.filter(id => id !== jobId);
-        } else {
-            updatedSaved = [...savedJobIds, jobId];
-        }
-        setSavedJobIds(updatedSaved);
-        localStorage.setItem('savedJobs', JSON.stringify(updatedSaved));
+        // Filter JOBS
+        const filtered = JOBS.filter(job => ids.includes(job.id));
+        setSavedJobs(filtered);
+        setIsLoading(false);
+    }, []);
+
+    const toggleSave = (id) => {
+        const newSavedIds = savedIds.filter(savedId => savedId !== id);
+        setSavedIds(newSavedIds);
+        localStorage.setItem("kodnest_saved_jobs", JSON.stringify(newSavedIds));
+
+        // Update local list
+        setSavedJobs(prev => prev.filter(job => job.id !== id));
     };
 
-    const handleStatusChange = (jobId, newStatus) => {
-        const updatedStatuses = {
-            ...jobStatuses,
-            [jobId]: {
-                status: newStatus,
-                date: new Date().toISOString()
-            }
-        };
-        setJobStatuses(updatedStatuses);
-        localStorage.setItem('jobTrackerStatus', JSON.stringify(updatedStatuses));
-    };
-
-    const savedJobsList = jobs.filter(job => savedJobIds.includes(job.id));
+    if (isLoading) {
+        return null; // Or skeleton
+    }
 
     return (
-        <div className="kn-route-page" style={{ maxWidth: '100%' }}>
-            <div style={{ maxWidth: 'var(--kn-text-measure)', margin: '0 auto' }}>
-                <h1 className="kn-route-page__title">Saved Jobs</h1>
-                <p className="kn-route-page__subtext" style={{ marginBottom: 'var(--kn-space-3)' }}>
-                    {savedJobsList.length > 0
-                        ? `You have saved ${savedJobsList.length} jobs.`
-                        : 'Jobs you save will appear here.'}
-                </p>
-            </div>
+        <div className="bg-background min-h-screen pb-20 job-tracker-layout">
+            <ContextHeader
+                title="Saved Jobs"
+                description="Your curated list of potential opportunities."
+            />
 
-            <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-                {savedJobsList.length > 0 ? (
-                    <div className="kn-layout-grid" style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                        gap: 'var(--kn-space-3)'
-                    }}>
-                        {savedJobsList.map(job => (
+            <main className="max-w-[1600px] mx-auto px-6 py-8">
+                {savedJobs.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center text-center py-20">
+                        <div className="w-16 h-16 bg-muted/30 rounded-full flex items-center justify-center mb-6">
+                            <Bookmark className="w-8 h-8 text-muted-foreground" />
+                        </div>
+                        <h3 className="text-xl font-serif font-bold text-foreground mb-2">
+                            Your collection is empty
+                        </h3>
+                        <p className="text-muted-foreground max-w-sm leading-relaxed">
+                            Jobs you bookmark from the dashboard will appear here for safe keeping.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {savedJobs.map((job) => (
                             <JobCard
                                 key={job.id}
                                 job={job}
                                 isSaved={true}
-                                onSave={handleSave}
-                                onView={setSelectedJob}
-                                status={jobStatuses[job.id]?.status}
-                                onStatusChange={handleStatusChange}
+                                onToggleSave={toggleSave}
                             />
                         ))}
                     </div>
-                ) : (
-                    <div className="kn-card" style={{ textAlign: 'center', padding: 'var(--kn-space-5)' }}>
-                        <h3 style={{ fontSize: 'var(--kn-heading3-size)', color: 'var(--kn-text-muted)' }}>No saved jobs yet</h3>
-                        <p><Link to="/dashboard" style={{ color: 'var(--kn-accent)', textDecoration: 'none', fontWeight: 600 }}>Go to the Dashboard</Link> to find and save opportunities.</p>
-                    </div>
                 )}
-            </div>
-
-            {selectedJob && (
-                <JobModal job={selectedJob} onClose={() => setSelectedJob(null)} />
-            )}
+            </main>
         </div>
     );
 }

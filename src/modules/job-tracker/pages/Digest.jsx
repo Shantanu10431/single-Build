@@ -1,225 +1,248 @@
-
-import React, { useState } from 'react';
-import { jobs } from '../data/jobs';
-import { calculateMatchScore } from '../utils/scoring';
+import React, { useState, useEffect } from 'react';
+import { ContextHeader } from '../components/layout/ContextHeader';
+import { Button } from '../components/ui/Button';
+import { DigestView } from '../components/digest/DigestView';
+import { JOBS } from '../lib/data';
+import { calculateMatchScore } from '../lib/scoring';
+import { Mail, Copy, Loader2, Sparkles, RefreshCw, Activity } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { format, parseISO } from 'date-fns';
+import { cn } from '../lib/utils';
 
-export default function Digest() {
-    const [digest, setDigest] = useState(() => {
-        const todayKey = (() => {
-            const today = new Date();
-            return `jobTrackerDigest_${today.toISOString().split('T')[0]}`;
-        })();
-        const existingDigest = localStorage.getItem(todayKey);
-        return existingDigest ? JSON.parse(existingDigest) : null;
-    });
-    const [preferences] = useState(() => {
-        const savedPrefs = localStorage.getItem('jobTrackerPreferences');
-        return savedPrefs ? JSON.parse(savedPrefs) : null;
-    });
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState('');
-    const [recentUpdates] = useState(() => {
-        const savedStatuses = JSON.parse(localStorage.getItem('jobTrackerStatus') || '{}');
-        return Object.entries(savedStatuses)
-            .map(([id, data]) => {
-                const job = jobs.find(j => j.id === parseInt(id));
-                return job ? { ...job, ...data } : null;
-            })
-            .filter(u => u && u.status !== 'Not Applied')
-            .sort((a, b) => new Date(b.date) - new Date(a.date))
-            .slice(0, 5);
-    });
+export default function DigestPage() {
+    const [digest, setDigest] = useState(null);
+    const [prefs, setPrefs] = useState(null);
+    const [recentUpdates, setRecentUpdates] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isGenerating, setIsGenerating] = useState(false);
+    const todayDate = format(new Date(), "yyyy-MM-dd");
+    const displayDate = format(new Date(), "EEEE, MMMM do, yyyy");
 
-    // Get Today's Date Key (YYYY-MM-DD)
-    const getTodayKey = () => {
-        const today = new Date();
-        return `jobTrackerDigest_${today.toISOString().split('T')[0]}`;
-    };
+    useEffect(() => {
+        // 1. Load Prefs
+        const prefString = localStorage.getItem("jobTrackerPreferences");
+        if (prefString) {
+            try {
+                setPrefs(JSON.parse(prefString));
+            } catch (e) {
+                console.error("Error parsing prefs", e);
+            }
+        }
+
+        // 2. Load Existing Digest
+        const savedDigest = localStorage.getItem(`jobTrackerDigest_${todayDate}`);
+        if (savedDigest) {
+            try {
+                setDigest(JSON.parse(savedDigest));
+            } catch (e) {
+                console.error("Error parsing saved digest", e);
+            }
+        }
+
+        // 3. Load Recent Status Updates
+        const statusData = localStorage.getItem("jobTrackerStatus");
+        if (statusData) {
+            try {
+                const statusMap = JSON.parse(statusData);
+                const updates = Object.entries(statusMap)
+                    .map(([id, record]) => {
+                        const job = JOBS.find(j => j.id === id);
+                        if (!job) return null;
+                        return { ...job, ...record };
+                    })
+                    .filter(item => item !== null)
+                    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+                    .slice(0, 5); // Take top 5 recent
+
+                setRecentUpdates(updates);
+            } catch (e) {
+                console.error("Error parsing status updates", e);
+            }
+        }
+
+        setIsLoading(false);
+    }, [todayDate]);
 
     const generateDigest = () => {
-        if (!preferences) return;
+        if (!prefs) return;
 
-        setLoading(true);
+        setIsGenerating(true);
 
         // Simulate API delay
         setTimeout(() => {
-            // Score all jobs
-            const scoredJobs = jobs.map(job => {
-                const { score, color } = calculateMatchScore(job, preferences);
-                return { ...job, matchScore: score, matchColor: color };
+            let scoredJobs = JOBS.map(job => ({
+                ...job,
+                score: calculateMatchScore(job, prefs)
+            }));
+
+            // Filter non-zero matches (optional, but good for quality)
+            // keeping strict rules: Sort Score Desc -> Posted Asc
+            scoredJobs.sort((a, b) => {
+                if (b.score !== a.score) return b.score - a.score;
+                return a.postedDaysAgo - b.postedDaysAgo;
             });
 
-            // Filter: Must have at least some match (score > 0)
-            // Sort: Score DESC, then postedDaysAgo ASC
-            const topJobs = scoredJobs
-                .filter(j => j.matchScore > 0)
-                .sort((a, b) => {
-                    if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
-                    return a.postedDaysAgo - b.postedDaysAgo;
-                })
-                .slice(0, 10);
+            const top10 = scoredJobs.slice(0, 10);
 
-            const todayKey = getTodayKey();
-            localStorage.setItem(todayKey, JSON.stringify(topJobs));
-            setDigest(topJobs);
-            setLoading(false);
-        }, 800);
+            setDigest(top10);
+            localStorage.setItem(`jobTrackerDigest_${todayDate}`, JSON.stringify(top10));
+            setIsGenerating(false);
+        }, 1500);
     };
 
-    const handleCopy = () => {
+    const copyToClipboard = () => {
         if (!digest) return;
-        const text = digest.map(j =>
-            `• ${j.title} at ${j.company} (${j.location})\n  Score: ${j.matchScore}/100 | Link: ${j.applyUrl}`
-        ).join('\n\n');
 
-        const header = `My 9AM Job Digest - ${new Date().toLocaleDateString()}\n\n`;
-        navigator.clipboard.writeText(header + text);
-        setMessage('Digest copied to clipboard!');
-        setTimeout(() => setMessage(''), 3000);
+        const text = digest.map((job, i) =>
+            `${i + 1}. ${job.title} at ${job.company}\n` +
+            `   Score: ${job.score} | ${job.location}\n` +
+            `   Link: ${job.applyUrl}\n`
+        ).join("\n");
+
+        const header = `My 9AM Job Digest - ${displayDate}\n\n`;
+
+        navigator.clipboard.writeText(header + text).then(() => {
+            alert("Digest copied to clipboard!");
+        });
     };
 
-    const handleEmail = () => {
+    const emailDraft = () => {
         if (!digest) return;
-        const subject = encodeURIComponent("My 9AM Job Digest");
-        const bodyObj = digest.map(j =>
-            `${j.title} at ${j.company} (${j.location}) - Score: ${j.matchScore}\nLink: ${j.applyUrl}`
-        ).join('\n\n');
-        const body = encodeURIComponent(`Here are my top job matches for today:\n\n${bodyObj}`);
+
+        const subject = encodeURIComponent(`My 9AM Job Digest - ${displayDate}`);
+        const body = digest.map((job, i) =>
+            `${i + 1}. ${job.title} at ${job.company}%0D%0A` +
+            `   Score: ${job.score} | ${job.location}%0D%0A` +
+            `   Link: ${job.applyUrl}%0D%0A`
+        ).join("%0D%0A");
+
         window.location.href = `mailto:?subject=${subject}&body=${body}`;
     };
 
-    if (!preferences) {
-        return (
-            <div className="kn-route-page">
-                <h1 className="kn-route-page__title">Daily Digest</h1>
-                <div className="kn-card" style={{ padding: 'var(--kn-space-5)', textAlign: 'center' }}>
-                    <h3 style={{ fontSize: 'var(--kn-heading3-size)', marginBottom: 'var(--kn-space-2)' }}>
-                        Personalization Required
-                    </h3>
-                    <p style={{ color: 'var(--kn-text-muted)', marginBottom: 'var(--kn-space-3)' }}>
-                        Set your preferences to generate a personalized daily digest.
-                    </p>
-                    <Link to="/settings" className="kn-btn kn-btn--primary">
-                        Go to Settings
-                    </Link>
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div className="kn-route-page" style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--kn-space-3)' }}>
-                <h1 className="kn-route-page__title" style={{ margin: 0 }}>Daily Digest</h1>
-                <span style={{ fontSize: '12px', color: 'var(--kn-text-muted)', background: '#eee', padding: '4px 8px', borderRadius: '4px' }}>
-                    Demo Mode: Daily 9AM trigger simulated manually.
-                </span>
-            </div>
+        <div className="bg-background min-h-screen pb-20 job-tracker-layout">
+            <ContextHeader
+                title="Daily Digest"
+                description="Your morning briefing of the best matches."
+            />
 
-            {/* Recent Updates Section */}
-            {recentUpdates.length > 0 && (
-                <div className="kn-card" style={{ marginBottom: 'var(--kn-space-3)', padding: 'var(--kn-space-3)', border: '1px solid #ffd700', background: '#fffbeb' }}>
-                    <h4 style={{ margin: '0 0 var(--kn-space-2) 0', fontSize: '16px' }}>📝 Recent Status Updates</h4>
-                    <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '14px', color: 'var(--kn-text-muted)' }}>
-                        {recentUpdates.map(u => (
-                            <li key={u.id} style={{ marginBottom: '4px' }}>
-                                <strong>{u.status}</strong>: {u.title} at {u.company}
-                                <span style={{ fontSize: '12px', opacity: 0.7 }}> ({new Date(u.date).toLocaleDateString()})</span>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
+            <main className="max-w-[1600px] mx-auto px-6 py-10">
 
-            {!digest ? (
-                <div className="kn-card" style={{ padding: 'var(--kn-space-5)', textAlign: 'center' }}>
-                    <p style={{ marginBottom: 'var(--kn-space-3)', fontSize: 'var(--kn-body-size)' }}>
-                        Your simulated 9AM digest is ready to be generated.
-                    </p>
-                    <button
-                        onClick={generateDigest}
-                        className="kn-btn kn-btn--primary"
-                        disabled={loading}
-                    >
-                        {loading ? 'Curating Matches...' : "Generate Today's 9AM Digest (Simulated)"}
-                    </button>
-                </div>
-            ) : digest.length === 0 ? (
-                <div className="kn-card" style={{ padding: 'var(--kn-space-5)', textAlign: 'center' }}>
-                    <h3 style={{ fontSize: 'var(--kn-heading3-size)' }}>No matching roles today.</h3>
-                    <p style={{ color: 'var(--kn-text-muted)' }}>Check again tomorrow or adjust your preferences.</p>
-                    <button onClick={() => { localStorage.removeItem(getTodayKey()); setDigest(null); }} className="kn-btn kn-btn--secondary" style={{ marginTop: 'var(--kn-space-3)' }}>
-                        Reset Simulation
-                    </button>
-                </div>
-            ) : (
-                <>
-                    {/* Email Layout Card */}
-                    <div className="kn-card" style={{ padding: '0', overflow: 'hidden', border: '1px solid #e0e0e0' }}>
-                        {/* Header */}
-                        <div style={{ background: '#f8f9fa', padding: 'var(--kn-space-4)', textAlign: 'center', borderBottom: '1px solid #e0e0e0' }}>
-                            <h2 style={{ fontSize: 'var(--kn-heading2-size)', margin: '0 0 8px 0', fontFamily: 'var(--kn-font-serif)' }}>
-                                Top 10 Jobs For You — 9AM Digest
-                            </h2>
-                            <p style={{ margin: 0, color: 'var(--kn-text-muted)', fontSize: '14px' }}>
-                                {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                            </p>
+                {/* Loading State */}
+                {isLoading && (
+                    <div className="flex justify-center p-20">
+                        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                    </div>
+                )}
+
+                {/* State 1: No Prefs */}
+                {!isLoading && !prefs && (
+                    <div className="flex flex-col items-center justify-center text-center p-12 border border-dashed border-muted rounded-lg bg-muted/5">
+                        <h3 className="text-xl font-serif font-bold mb-2">Personalization Required</h3>
+                        <p className="text-muted-foreground mb-6 max-w-md">
+                            We cannot generate a personalized digest without knowing your preferences.
+                        </p>
+                        <Link to="/jobs/settings">
+                            <Button>Set Preferences</Button>
+                        </Link>
+                    </div>
+                )}
+
+                {/* State 2: No Digest Yet */}
+                {!isLoading && prefs && !digest && (
+                    <div className="flex flex-col items-center justify-center text-center py-20">
+                        <div className="w-16 h-16 bg-muted/30 rounded-full flex items-center justify-center mb-6">
+                            <Mail className="w-8 h-8 text-muted-foreground" />
                         </div>
 
-                        {/* List */}
-                        <div style={{ padding: 'var(--kn-space-3)' }}>
-                            {digest.map((job, idx) => (
-                                <div key={job.id} style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    padding: 'var(--kn-space-3)',
-                                    borderBottom: idx < digest.length - 1 ? '1px solid #eee' : 'none'
-                                }}>
-                                    <div style={{ flex: 1 }}>
-                                        <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', color: 'var(--kn-heading-color)' }}>{job.title}</h4>
-                                        <p style={{ margin: 0, fontSize: '14px', color: 'var(--kn-text-muted)' }}>
-                                            {job.company} • {job.location} • {job.experience}
-                                        </p>
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--kn-space-3)' }}>
-                                        <span style={{
-                                            fontSize: '14px',
-                                            fontWeight: 'bold',
-                                            color: job.matchColor,
-                                            background: '#f5f5f5',
-                                            padding: '2px 8px',
-                                            borderRadius: '12px'
-                                        }}>
-                                            {job.matchScore}% Match
-                                        </span>
-                                        <a href={job.applyUrl} target="_blank" rel="noreferrer" className="kn-btn kn-btn--secondary" style={{ fontSize: '12px', padding: '4px 10px' }}>
-                                            Apply
-                                        </a>
-                                    </div>
+                        <h3 className="text-xl font-serif font-bold text-foreground mb-2">
+                            Ready for your briefing?
+                        </h3>
+
+                        <p className="text-muted-foreground max-w-sm leading-relaxed mb-8">
+                            Generate your personalized top 10 list for today.
+                            <br />
+                            <span className="text-xs text-muted-foreground/70">(Demo: Daily 9AM trigger simulated manually)</span>
+                        </p>
+
+                        <Button onClick={generateDigest} disabled={isGenerating} className="min-w-[200px]">
+                            {isGenerating ? (
+                                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Analyzing 60 Jobs...</>
+                            ) : (
+                                <><Sparkles className="w-4 h-4 mr-2" /> Generate 9AM Digest</>
+                            )}
+                        </Button>
+                    </div>
+                )}
+
+                {/* State 3: Digest View */}
+                {!isLoading && digest && (
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 grid md:grid-cols-[1fr_300px] gap-8 items-start">
+
+                        {/* Left: Main Digest */}
+                        <div>
+                            <div className="flex justify-between items-center mb-6">
+                                <div className="text-sm text-muted-foreground font-medium">
+                                    Matches found: {digest.length}
                                 </div>
-                            ))}
+                                <div className="flex gap-2">
+                                    <Button variant="secondary" size="sm" onClick={copyToClipboard}>
+                                        <Copy className="w-4 h-4 mr-2" /> Copy
+                                    </Button>
+                                    <Button variant="secondary" size="sm" onClick={emailDraft}>
+                                        <Mail className="w-4 h-4 mr-2" /> Email
+                                    </Button>
+                                    <Button variant="secondary" size="sm" onClick={generateDigest} title="Regenerate">
+                                        <RefreshCw className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <DigestView jobs={digest} date={displayDate} />
                         </div>
 
-                        {/* Footer */}
-                        <div style={{ background: '#fafafa', padding: 'var(--kn-space-3)', textAlign: 'center', borderTop: '1px solid #eee', fontSize: '12px', color: '#999' }}>
-                            This digest was generated based on your preferences.
-                        </div>
-                    </div>
+                        {/* Right: Recent Updates */}
+                        <div className="bg-white border border-muted rounded-lg p-6 shadow-sm sticky top-20">
+                            <div className="flex items-center gap-2 mb-4 text-foreground font-serif font-bold text-lg">
+                                <Activity className="w-5 h-5 text-primary" />
+                                Recent Updates
+                            </div>
 
-                    {/* Actions */}
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--kn-space-2)', marginTop: 'var(--kn-space-3)' }}>
-                        <button onClick={handleCopy} className="kn-btn kn-btn--secondary">
-                            Copy Digest to Clipboard
-                        </button>
-                        <button onClick={handleEmail} className="kn-btn kn-btn--secondary">
-                            Create Email Draft
-                        </button>
+                            {recentUpdates.length === 0 ? (
+                                <p className="text-sm text-muted-foreground text-center py-8">
+                                    No recent status updates. Start tracking your applications!
+                                </p>
+                            ) : (
+                                <div className="space-y-4">
+                                    {recentUpdates.map(job => (
+                                        <div key={job.id} className="text-sm border-b border-muted pb-3 last:border-0">
+                                            <div className="font-medium text-foreground">{job.title}</div>
+                                            <div className="text-xs text-muted-foreground mb-2">{job.company}</div>
+                                            <div className="flex justify-between items-center">
+                                                <span className={cn(
+                                                    "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
+                                                    job.status === "Applied" && "bg-blue-100 text-blue-700",
+                                                    job.status === "Rejected" && "bg-red-100 text-red-700",
+                                                    job.status === "Selected" && "bg-green-100 text-green-700",
+                                                    job.status === "Not Applied" && "bg-muted text-muted-foreground"
+                                                )}>
+                                                    {job.status}
+                                                </span>
+                                                <span className="text-[10px] text-muted-foreground">
+                                                    {format(parseISO(job.updatedAt), "MMM d")}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
                     </div>
-                    {message && <p style={{ textAlign: 'center', color: 'green', marginTop: '8px', fontSize: '14px' }}>{message}</p>}
-                </>
-            )}
-        </div>
+                )
+                }
+
+            </main >
+        </div >
     );
 }

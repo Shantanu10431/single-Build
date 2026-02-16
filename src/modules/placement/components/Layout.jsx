@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Outlet, NavLink, Link } from 'react-router-dom';
 import { LayoutDashboard, Code, FileCheck, BookOpen, User, LogOut, CheckSquare, Package, Medal, ExternalLink } from 'lucide-react';
@@ -7,39 +6,39 @@ const Sidebar = () => {
     return (
         <aside className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col fixed inset-y-0">
             <div className="h-16 flex items-center px-6 border-b border-gray-200">
-                <Link to="/" className="text-xl font-bold text-indigo-600 flex items-center gap-2">
+                <Link to="/placement/dashboard" className="text-xl font-bold text-indigo-600 flex items-center gap-2">
                     <Code className="w-6 h-6" />
                     <span>Placement Prep</span>
                 </Link>
             </div>
 
             <nav className="flex-1 p-4 space-y-1">
-                <NavItem to="/dashboard" icon={<LayoutDashboard />} label="Dashboard" />
-                <NavItem to="/analysis/new" icon={<FileCheck />} label="JD Analysis" />
-                <NavItem to="/analysis/history" icon={<BookOpen />} label="History" />
-                <NavItem to="/practice" icon={<Code />} label="Practice" />
-                <NavItem to="/assessments" icon={<FileCheck />} label="Assessments" />
-                <NavItem to="/resources" icon={<BookOpen />} label="Resources" />
+                <NavItem to="/placement/dashboard" icon={<LayoutDashboard />} label="Dashboard" />
+                <NavItem to="/placement/analysis/new" icon={<FileCheck />} label="JD Analysis" />
+                <NavItem to="/placement/analysis/history" icon={<BookOpen />} label="History" />
+                <NavItem to="/placement/practice" icon={<Code />} label="Practice" />
+                <NavItem to="/placement/assessments" icon={<FileCheck />} label="Assessments" />
+                <NavItem to="/placement/resources" icon={<BookOpen />} label="Resources" />
 
-                <NavItem to="/profile" icon={<User />} label="Profile" />
+                <NavItem to="/placement/profile" icon={<User />} label="Profile" />
 
                 <div className="pt-4 mt-2">
                     <p className="px-4 text-xs font-semibold text-indigo-400 uppercase mb-2">Projects</p>
-                    <NavItem to="/rb/01-problem" icon={<FileCheck />} label="AI Resume Builder" />
+                    <NavItem to="/placement/rb/01-problem" icon={<FileCheck />} label="AI Resume Builder" />
                 </div>
 
                 <div className="pt-4 border-t border-indigo-800">
                     <p className="px-4 text-xs font-semibold text-indigo-400 uppercase mb-2">Internal</p>
-                    <NavItem to="/prp/07-test" icon={<CheckSquare />} label="Test Checklist" />
-                    <NavItem to="/prp/08-ship" icon={<Package />} label="Ship" />
-                    <NavItem to="/prp/proof" icon={<Medal />} label="Proof" />
+                    <NavItem to="/placement/prp/07-test" icon={<CheckSquare />} label="Test Checklist" />
+                    <NavItem to="/placement/prp/08-ship" icon={<Package />} label="Ship" />
+                    <NavItem to="/placement/prp/proof" icon={<Medal />} label="Proof" />
                 </div>
 
                 <div className="pt-4 border-t border-gray-200 mt-4">
-                    <a href="http://localhost:5174" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-md transition-colors">
+                    <Link to="/jobs" className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-gray-50 rounded-md transition-colors">
                         <ExternalLink className="w-5 h-5" />
                         Job Tracker ↗
-                    </a>
+                    </Link>
                 </div>
             </nav>
 

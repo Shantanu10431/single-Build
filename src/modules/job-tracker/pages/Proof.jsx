@@ -1,46 +1,68 @@
+import React, { useState, useEffect } from 'react';
+import { ContextHeader } from '../components/layout/ContextHeader';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { Label } from '../components/ui/Label';
+import { Card } from '../components/ui/Card';
+import { CheckCircle2, Copy, ExternalLink, ShieldCheck, Clock, AlertTriangle } from 'lucide-react';
+import { cn } from '../lib/utils';
+import { Link } from 'react-router-dom';
 
-import React, { useState } from 'react';
+const STEPS = [
+    { id: 1, label: "Design System Setup", status: "completed" },
+    { id: 2, label: "Global Layout Implementation", status: "completed" },
+    { id: 3, label: "Core Components", status: "completed" },
+    { id: 4, label: "Job Notification Tracker Routes", status: "completed" },
+    { id: 5, label: "App Skeleton Implementation", status: "completed" },
+    { id: 6, label: "Data Integration & Dashboard", status: "completed" },
+    { id: 7, label: "Preference Logic & Scoring Engine", status: "completed" },
+    { id: 8, label: "Daily Digest Engine", status: "completed" },
+];
 
-export default function Proof() {
-    const [links, setLinks] = useState(() => {
-        const savedLinks = localStorage.getItem('jobTrackerProofLinks');
-        return savedLinks ? JSON.parse(savedLinks) : {
-            lovable: '',
-            github: '',
-            deploy: ''
-        };
+export default function ProofPage() {
+    const [links, setLinks] = useState({
+        lovable: "",
+        github: "",
+        deployed: ""
     });
-    const [checklistComplete] = useState(() => {
-        const savedChecklist = localStorage.getItem('jobTrackerTestChecklist');
-        if (savedChecklist) {
-            const parsed = JSON.parse(savedChecklist);
-            return Object.values(parsed).every(Boolean) && Object.keys(parsed).length >= 10;
+    const [testsPassed, setTestsPassed] = useState(0);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        // Load Links
+        const savedLinks = localStorage.getItem("jobTrackerSubmission");
+        if (savedLinks) {
+            try {
+                setLinks(JSON.parse(savedLinks));
+            } catch (e) {
+                console.error(e);
+            }
         }
-        return false;
-    });
-    // Derived state for shipped
-    const linksValid = links.lovable && links.github && links.deploy;
-    const shipped = linksValid && checklistComplete;
 
-    const handleLinkChange = (field, value) => {
-        const updated = { ...links, [field]: value };
-        setLinks(updated);
-        localStorage.setItem('jobTrackerProofLinks', JSON.stringify(updated));
+        // Load Test Status
+        const savedTests = localStorage.getItem("jobTrackerTests");
+        if (savedTests) {
+            try {
+                const checked = JSON.parse(savedTests);
+                setTestsPassed(checked.length);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        setIsLoading(false);
+    }, []);
+
+    const updateLink = (key, value) => {
+        const newLinks = { ...links, [key]: value };
+        setLinks(newLinks);
+        localStorage.setItem("jobTrackerSubmission", JSON.stringify(newLinks));
     };
 
-    const steps = [
-        { id: 1, label: 'Init & Setup', status: 'Completed' },
-        { id: 2, label: 'Dashboard & Jobs', status: 'Completed' },
-        { id: 3, label: 'Scoring Engine', status: 'Completed' },
-        { id: 4, label: 'Digest Engine', status: 'Completed' },
-        { id: 5, label: 'Job Status Tracking', status: 'Completed' },
-        { id: 6, label: 'Test Checklist', status: checklistComplete ? 'Completed' : 'Pending' },
-        { id: 7, label: 'Ship Guard', status: checklistComplete ? 'Completed' : 'Pending' },
-        { id: 8, label: 'Final Proof', status: shipped ? 'Completed' : 'Pending' }
-    ];
+    const isShippable = testsPassed >= 10 && links.lovable && links.github && links.deployed;
 
-    const getSubmissionText = () => {
-        return `Job Notification Tracker — Final Submission
+    const copySubmission = () => {
+        const text = `------------------------------------------
+Job Notification Tracker — Final Submission
 
 Lovable Project:
 ${links.lovable}
@@ -49,133 +71,150 @@ GitHub Repository:
 ${links.github}
 
 Live Deployment:
-${links.deploy}
+${links.deployed}
 
 Core Features:
 - Intelligent match scoring
 - Daily digest simulation
 - Status tracking
-- Test checklist enforced`;
-    };
+- Test checklist enforced
+------------------------------------------`;
 
-    const copyToClipboard = () => {
-        navigator.clipboard.writeText(getSubmissionText());
-        alert("Submission copied to clipboard!");
+        navigator.clipboard.writeText(text).then(() => {
+            alert("Submission copied to clipboard!");
+        });
     };
 
     return (
-        <div className="kn-route-page" style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: 'var(--kn-space-4)' }}>
-                <h1 className="kn-route-page__title">Project 1 — Job Notification Tracker</h1>
-                <div style={{
-                    display: 'inline-block',
-                    padding: '4px 12px',
-                    borderRadius: '16px',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    background: shipped ? '#d4edda' : '#fff3cd',
-                    color: shipped ? '#155724' : '#856404',
-                    marginTop: 'var(--kn-space-2)'
-                }}>
-                    Status: {shipped ? 'Shipped' : 'In Progress'}
+        <div className="bg-background min-h-screen pb-20 job-tracker-layout">
+            <ContextHeader
+                title="Final Proof"
+                description="Project 1 — Job Notification Tracker"
+            />
+
+            <main className="max-w-[1200px] mx-auto px-6 py-10 grid md:grid-cols-[1fr_400px] gap-10">
+
+                <div className="space-y-10">
+                    {/* 1. Step Summary */}
+                    <section>
+                        <h2 className="text-xl font-serif font-bold mb-6 flex items-center gap-2">
+                            <CheckCircle2 className="w-5 h-5 text-primary" />
+                            Development Steps
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {STEPS.map((step) => (
+                                <div key={step.id} className="flex items-center gap-3 p-3 rounded-lg border bg-card">
+                                    <div className="w-6 h-6 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-xs font-bold">
+                                        ✓
+                                    </div>
+                                    <span className="text-sm font-medium text-foreground">{step.label}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* 2. Artifact Collection */}
+                    <section>
+                        <h2 className="text-xl font-serif font-bold mb-6 flex items-center gap-2">
+                            <ExternalLink className="w-5 h-5 text-primary" />
+                            Artifact Collection
+                        </h2>
+                        <Card className="p-6 space-y-6">
+                            <div className="grid gap-2">
+                                <Label htmlFor="lovable">Lovable Project Link</Label>
+                                <Input
+                                    id="lovable"
+                                    placeholder="https://lovable.dev/..."
+                                    value={links.lovable}
+                                    onChange={(e) => updateLink("lovable", e.target.value)}
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="github">GitHub Repository Link</Label>
+                                <Input
+                                    id="github"
+                                    placeholder="https://github.com/..."
+                                    value={links.github}
+                                    onChange={(e) => updateLink("github", e.target.value)}
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="deployed">Live Deployment URL</Label>
+                                <Input
+                                    id="deployed"
+                                    placeholder="https://vercel.app/..."
+                                    value={links.deployed}
+                                    onChange={(e) => updateLink("deployed", e.target.value)}
+                                />
+                            </div>
+                        </Card>
+                    </section>
                 </div>
-            </div>
 
-            <div className="kn-layout-grid" style={{ gridTemplateColumns: '1fr 1.5fr', gap: 'var(--kn-space-4)', alignItems: 'start' }}>
+                {/* Sidebar: Status & Action */}
+                <div className="space-y-6">
+                    <Card className={cn(
+                        "p-6 border-2",
+                        isShippable ? "border-green-100 bg-green-50/30" : "border-muted bg-muted/5"
+                    )}>
+                        <h3 className="font-serif font-bold text-lg mb-2">Project Status</h3>
 
-                {/* A) Step Completion Summary */}
-                <div className="kn-card">
-                    <h3 style={{ fontSize: '18px', marginBottom: 'var(--kn-space-3)' }}>Step Summary</h3>
-                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                        {steps.map(step => (
-                            <li key={step.id} style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                marginBottom: '12px',
-                                fontSize: '14px',
-                                color: step.status === 'Completed' ? 'var(--kn-text-color)' : 'var(--kn-text-muted)'
-                            }}>
-                                <span>{step.id}. {step.label}</span>
-                                <span style={{
-                                    color: step.status === 'Completed' ? '#28a745' : '#ffc107',
-                                    fontWeight: 600
-                                }}>
-                                    {step.status === 'Completed' ? '✓' : '○'}
+                        <div className="flex items-center gap-2 mb-6">
+                            {isShippable ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-600 text-white text-sm font-bold shadow-sm">
+                                    <ShieldCheck className="w-4 h-4" /> Shipped
                                 </span>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
+                            ) : (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-sm font-bold">
+                                    <Clock className="w-4 h-4" /> In Progress
+                                </span>
+                            )}
+                        </div>
 
-                {/* B) Artifact Collection */}
-                <div className="kn-card">
-                    <h3 style={{ fontSize: '18px', marginBottom: 'var(--kn-space-3)' }}>Artifact Collection</h3>
-                    <div className="kn-stack kn-stack--3">
-                        <div className="kn-input-wrap">
-                            <label>Lovable Project Link</label>
-                            <input
-                                type="url"
-                                className="kn-input"
-                                placeholder="https://lovable.dev/..."
-                                value={links.lovable}
-                                onChange={(e) => handleLinkChange('lovable', e.target.value)}
-                            />
+                        <div className="space-y-4 text-sm text-muted-foreground mb-6">
+                            <div className="flex justify-between items-center">
+                                <span>Test Checklist</span>
+                                <span className={cn(
+                                    "font-medium",
+                                    testsPassed >= 10 ? "text-green-600" : "text-amber-600"
+                                )}>
+                                    {testsPassed}/10 Passed
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span>Artifact Links</span>
+                                <span className={cn(
+                                    "font-medium",
+                                    (links.lovable && links.github && links.deployed) ? "text-green-600" : "text-amber-600"
+                                )}>
+                                    {Number(!!links.lovable) + Number(!!links.github) + Number(!!links.deployed)}/3 Ready
+                                </span>
+                            </div>
                         </div>
-                        <div className="kn-input-wrap">
-                            <label>GitHub Repository Link</label>
-                            <input
-                                type="url"
-                                className="kn-input"
-                                placeholder="https://github.com/..."
-                                value={links.github}
-                                onChange={(e) => handleLinkChange('github', e.target.value)}
-                            />
-                        </div>
-                        <div className="kn-input-wrap">
-                            <label>Deployed URL</label>
-                            <input
-                                type="url"
-                                className="kn-input"
-                                placeholder="https://vercel.com/..."
-                                value={links.deploy}
-                                onChange={(e) => handleLinkChange('deploy', e.target.value)}
-                            />
-                        </div>
+
+                        {isShippable ? (
+                            <div className="space-y-4">
+                                <div className="p-3 bg-green-100/50 rounded text-green-800 text-sm font-medium text-center border border-green-200">
+                                    Project 1 Shipped Successfully.
+                                </div>
+                                <Button className="w-full gap-2" onClick={copySubmission}>
+                                    <Copy className="w-4 h-4" /> Copy Final Submission
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="p-3 bg-amber-100/50 rounded text-amber-800 text-sm font-medium text-center border border-amber-200">
+                                <AlertTriangle className="w-4 h-4 inline mr-1 mb-0.5" />
+                                Please complete all requirements to ship.
+                            </div>
+                        )}
+                    </Card>
+
+                    <div className="text-xs text-muted-foreground text-center px-4 leading-relaxed">
+                        Ensure all links are publicly accessible before copying the final submission.
                     </div>
                 </div>
 
-            </div>
-
-            {/* C) Final Submission Export */}
-            {shipped && (
-                <div className="kn-card" style={{ marginTop: 'var(--kn-space-4)', background: '#f8f9fa', border: '1px solid #e9ecef' }}>
-                    <h3 style={{ fontSize: '18px', marginBottom: 'var(--kn-space-2)' }}>Final Submission</h3>
-                    <p style={{ fontSize: '14px', color: 'var(--kn-text-muted)', marginBottom: 'var(--kn-space-3)' }}>
-                        Your project is ready to ship. Copy the text below for submission.
-                    </p>
-
-                    <pre style={{
-                        background: '#fff',
-                        padding: 'var(--kn-space-3)',
-                        borderRadius: '4px',
-                        border: '1px solid #ddd',
-                        fontSize: '13px',
-                        overflowX: 'auto',
-                        marginBottom: 'var(--kn-space-3)'
-                    }}>
-                        {getSubmissionText()}
-                    </pre>
-
-                    <div style={{ display: 'flex', gap: 'var(--kn-space-3)', alignItems: 'center' }}>
-                        <button onClick={copyToClipboard} className="kn-btn kn-btn--primary">
-                            Copy Final Submission
-                        </button>
-                        <span style={{ color: '#28a745', fontWeight: 600 }}>
-                            Project 1 Shipped Successfully.
-                        </span>
-                    </div>
-                </div>
-            )}
+            </main>
         </div>
     );
 }

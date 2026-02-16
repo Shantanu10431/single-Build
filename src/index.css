@@ -41,3 +41,68 @@ body {
     print-color-adjust: exact;
   }
 }
+
+/* --- Migrated Next.js (Resume Builder) Styles --- */
+@theme {
+  --color-main: var(--bg-main);
+  --color-card: var(--bg-card);
+  --color-accent: var(--accent);
+  --color-text-main: var(--text-main);
+  --color-muted: var(--text-muted);
+  --color-border: var(--border);
+}
+
+:root {
+  /* Resume Builder Palette */
+  --bg-main: #F7F6F3;
+  --bg-card: #FFFFFF;
+  --text-main: #111111;
+  --accent: #8B0000;
+  --border: #E5E5E5;
+  --text-muted: #666666;
+  --font-serif: 'Playfair Display', serif;
+}
+
+@layer base {
+  .rb-body {
+    @apply bg-main text-text-main font-sans min-h-screen flex flex-col;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-card border border-border shadow-sm rounded-sm;
+  }
+
+  .input {
+    @apply bg-card border border-border p-2 w-full rounded-sm focus:outline-none focus:border-accent;
+  }
+
+  .btn-primary {
+    @apply bg-accent text-white px-4 py-2 rounded-sm font-medium hover:opacity-90 transition-opacity;
+  }
+}
+
+/* --- Placement Platform Styles --- */
+:root {
+  /* Placement Palette */
+  --placement-bg: #F7F6F3;
+  --placement-fg: #111111;
+}
+
+/* Scoped body for placement if needed, or just utility classes */
+
+/* --- Job Tracker Styles --- */
+:root {
+  /* Job Tracker Palette */
+  --jt-bg: #F7F6F3;
+  --jt-fg: #111111;
+  --jt-sidebar: #FFFFFF;
+  --jt-border: #E5E5E5;
+}
+
+/* Scoped body for job tracker if needed */
+.job-tracker-layout {
+  background-color: var(--jt-bg);
+  color: var(--jt-fg);
+}

@@ -1,99 +1,85 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { analyzeJob } from '../utils/analysisEngine';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
-import { Search } from 'lucide-react';
+import { analyzeJD } from '../lib/analyzer';
+import { useAnalysisHistory } from '../hooks/useAnalysisHistory';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { cn } from '../lib/utils';
 
-export default function JobAnalysisInput() {
+export default function AnalyzePage() {
     const navigate = useNavigate();
-    const [formData, setFormData] = useState({
-        company: '',
-        role: '',
-        jdText: ''
-    });
+    const { saveAnalysis } = useAnalysisHistory();
     const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
+    const [company, setCompany] = useState("");
+    const [role, setRole] = useState("");
+    const [jdText, setJdText] = useState("");
+
+    const handleAnalyze = () => {
+        if (!jdText.trim()) return;
+
         setLoading(true);
 
-        // Simulate processing delay for "Realism"
+        // Simulate processing delay for better UX
         setTimeout(() => {
-            analyzeJob(formData.company, formData.role, formData.jdText);
+            const result = analyzeJD(jdText, company, role);
+            saveAnalysis(result);
             setLoading(false);
-            navigate('/analysis/results');
+            navigate(`/placement/analysis/results?id=${result.id}`);
         }, 1500);
     };
 
     return (
-        <div className="max-w-2xl mx-auto space-y-6">
-            <h2 className="text-3xl font-bold text-slate-900">New Job Analysis</h2>
-            <p className="text-slate-600">
-                Paste a job description to get a personalized preparation plan, interview questions, and a readiness score.
-            </p>
+        <div className="max-w-3xl mx-auto space-y-6">
+            <div className="space-y-2">
+                <h1 className="text-3xl font-bold tracking-tight text-gray-900">Analyze Job Description</h1>
+                <p className="text-gray-500">Paste a JD below to get a personalized preparation plan and readiness score.</p>
+            </div>
 
             <Card>
                 <CardHeader>
                     <CardTitle>Job Details</CardTitle>
-                    <CardDescription>Enter the details of the role you are targeting.</CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Company Name</label>
-                                <input
-                                    required
-                                    className="w-full p-2 border border-slate-200 rounded-md"
-                                    placeholder="e.g. Google, Amazon"
-                                    value={formData.company}
-                                    onChange={e => setFormData({ ...formData, company: e.target.value })}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Role</label>
-                                <input
-                                    required
-                                    className="w-full p-2 border border-slate-200 rounded-md"
-                                    placeholder="e.g. SDE-1, Frontend Engineer"
-                                    value={formData.role}
-                                    onChange={e => setFormData({ ...formData, role: e.target.value })}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Job Description (JD) <span className="text-red-500">*</span></label>
-                            <textarea
-                                required
-                                className={`w-full p-3 border rounded-md min-h-[200px] ${formData.jdText.length > 0 && formData.jdText.length < 200 ? 'border-orange-300 focus:ring-orange-200' : 'border-slate-200'}`}
-                                placeholder="Paste the full JD here..."
-                                value={formData.jdText}
-                                onChange={e => setFormData({ ...formData, jdText: e.target.value })}
-                            />
-                            <div className="flex justify-between items-start">
-                                <p className={`text-xs ${formData.jdText.length > 0 && formData.jdText.length < 200 ? 'text-orange-600 font-medium' : 'text-slate-400'}`}>
-                                    {formData.jdText.length > 0 && formData.jdText.length < 200 && "This JD is too short to analyze deeply. Paste full JD for better output."}
-                                </p>
-                                <p className="text-xs text-slate-400">{formData.jdText.length} characters</p>
-                            </div>
-                        </div>
-
-                        <button
-                            disabled={loading}
-                            type="submit"
-                            className="w-full py-3 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
-                        >
-                            {loading ? (
-                                <span>Analyzing...</span>
-                            ) : (
-                                <>
-                                    <Search className="w-4 h-4" /> Analyze Job
-                                </>
+                <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input
+                            placeholder="Company Name (Optional)"
+                            value={company}
+                            onChange={(e) => setCompany(e.target.value)}
+                        />
+                        <Input
+                            placeholder="Job Role (Optional)"
+                            value={role}
+                            onChange={(e) => setRole(e.target.value)}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Job Description / Requirements <span className="text-red-500">*</span>
+                        </label>
+                        <textarea
+                            className={cn(
+                                "w-full min-h-[300px] p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-y transition-colors",
+                                jdText.length > 0 && jdText.length < 200 ? "border-orange-300 bg-orange-50" : "border-gray-300"
                             )}
-                        </button>
-                    </form>
+                            placeholder="Paste the full job description here..."
+                            value={jdText}
+                            onChange={(e) => setJdText(e.target.value)}
+                        />
+                        {jdText.length > 0 && jdText.length < 200 && (
+                            <p className="text-sm text-orange-600 mt-2 flex items-center">
+                                ⚠️ This JD is too short to analyze deeply. Paste full JD for better output.
+                            </p>
+                        )}
+                    </div>
+                    <Button
+                        className="w-full md:w-auto"
+                        onClick={handleAnalyze}
+                        disabled={!jdText.trim() || loading}
+                    >
+                        {loading ? "Analyzing..." : "Analyze Job Description"}
+                    </Button>
                 </CardContent>
             </Card>
         </div>

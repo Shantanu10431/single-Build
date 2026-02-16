@@ -1,94 +1,127 @@
+import React, { useState, useEffect } from 'react';
+import AppNavbar from '../components/layout/AppNavbar';
+import ResumePreview from '../components/builder/ResumePreview';
+import ValidationAlert from '../components/preview/ValidationAlert';
+import ATSCircularScore from '../components/preview/ATSCircularScore';
+import { calculateATSScore } from '../lib/scoring';
+import { INITIAL_RESUME_DATA, SAMPLE_RESUME_DATA } from '../types/resume';
+import { Printer, Copy, Check } from 'lucide-react';
 
-import { useResume } from '../context/ResumeContext';
-import { ArrowLeft, Printer, Copy, AlertTriangle, CheckCircle } from 'lucide-react';
-import { useState } from 'react';
-
-export default function Preview() {
-    const { resumeData } = useResume();
-    const [copySuccess, setCopySuccess] = useState(false);
-
-    // Validation
-    const warnings = [];
-    if (!resumeData.personal.fullName) warnings.push("Missing Name");
-    if (resumeData.experience.length === 0 && resumeData.projects.length === 0) warnings.push("Missing Experience or Projects");
-
-    // Copy to Text
-    const copyToText = () => {
-        const { personal, summary, experience, projects, education, skills } = resumeData;
-        const sections = [
-            personal.fullName.toUpperCase(),
-            `${personal.email} | ${personal.phone} | ${personal.location}`,
-            personal.linkedin ? `LinkedIn: ${personal.linkedin}` : '',
-            personal.github ? `GitHub: ${personal.github}` : '',
-            '\nSUMMARY',
-            summary,
-            '\nEXPERIENCE',
-            ...experience.map(e => `${e.role} at ${e.company} (${e.date})\n${e.description}`),
-            '\nPROJECTS',
-            ...projects.map(p => `${p.name} (${p.link})\n${p.description}`),
-            '\nEDUCATION',
-            ...education.map(e => `${e.school} - ${e.degree} (${e.date})`),
-            '\nSKILLS',
-            Object.values(skills).flat().join(', ')
-        ];
-
-        const text = sections.filter(Boolean).join('\n');
-        navigator.clipboard.writeText(text);
-        setCopySuccess(true);
-        setTimeout(() => setCopySuccess(false), 2000);
+export default function PreviewPage() {
+    const validateData = (d) => {
+        const missing = [];
+        if (!d.personalInfo.fullName) missing.push("Full Name");
+        if (d.experience.length === 0 && d.projects.length === 0) missing.push("At least one Experience or Project");
+        setMissingFields(missing);
     };
 
+    // eslint-disable-next-line
+    const [data, setData] = useState(() => {
+        try {
+            const saved = localStorage.getItem('resumeBuilderData');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                // Migration logic
+                if (Array.isArray(parsed.skills)) {
+                    parsed.skills = { technical: parsed.skills, soft: [], tools: [] };
+                }
+                if (parsed.projects) {
+                    parsed.projects = parsed.projects.map((p) => ({
+                        ...p,
+                        technologies: Array.isArray(p.technologies) ? p.technologies : (p.techStack ? p.techStack.split(',').map((s) => s.trim()).filter(Boolean) : [])
+                    }));
+                }
+                return parsed;
+            }
+        } catch (e) { console.error('Failed to load resume data', e); }
+        return SAMPLE_RESUME_DATA;
+    });
+
+    const [loaded, setLoaded] = useState(false);
+    const [missingFields, setMissingFields] = useState([]);
+    const [copied, setCopied] = useState(false);
+
+    useEffect(() => {
+        if (data) {
+            validateData(data);
+        }
+        // eslint-disable-next-line
+        setLoaded(true);
+    }, [data]);
+
+    const handleCopyText = () => {
+        const { personalInfo, summary, experience, projects, education, skills } = data;
+
+        const lines = [
+            personalInfo.fullName.toUpperCase(),
+            [personalInfo.email, personalInfo.phone, personalInfo.location, personalInfo.linkedin, personalInfo.github].filter(Boolean).join(' | '),
+            '',
+            'SUMMARY',
+            '----------------------------------------',
+            summary,
+            '',
+            'EXPERIENCE',
+            '----------------------------------------',
+            ...experience.map(e => `${e.role} at ${e.company} (${e.startDate} - ${e.endDate})\n${e.description}`),
+            '',
+            'PROJECTS',
+            '----------------------------------------',
+            ...projects.map(p => `${p.name} | ${(p.technologies || []).join(', ')}\n${p.description} ${p.liveUrl ? `(Live: ${p.liveUrl})` : ''} ${p.githubUrl ? `(GitHub: ${p.githubUrl})` : ''}`),
+            '',
+            'EDUCATION',
+            '----------------------------------------',
+            ...education.map(e => `${e.school} - ${e.degree} (${e.startDate} - ${e.endDate})`),
+            '',
+            'SKILLS',
+            '----------------------------------------',
+            [...skills.technical, ...skills.soft, ...skills.tools].join(', ')
+        ];
+
+        navigator.clipboard.writeText(lines.join('\n'));
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    if (!loaded) return null;
+
     return (
-        <div className="min-h-screen bg-gray-100 p-8 flex flex-col items-center">
-            {/* Controls - Hidden on Print */}
-            <div className="w-[210mm] mb-8 print:hidden space-y-4">
-                <div className="flex justify-between items-center">
-                    <Link to="/builder" className="flex items-center gap-2 text-gray-600 hover:text-brand-600 font-medium">
-                        <ArrowLeft size={20} /> Back to Builder
-                    </Link>
-                    <div className="flex gap-3">
+        <>
+            <AppNavbar />
+            <div className="pt-[80px] min-h-screen bg-gray-100 flex flex-col items-center p-8 print:p-0 print:bg-white print:pt-0">
+
+                <div className="w-full max-w-[816px] mb-6 flex flex-col md:flex-row gap-6 print:hidden justify-between items-start">
+                    <div>
+                        <h1 className="text-2xl font-serif font-bold text-main mb-2">Final Preview</h1>
+                        <p className="text-sm text-gray-500">Review your resume layout and ATS score before exporting.</p>
+                    </div>
+
+                    <div className="flex gap-4">
                         <button
-                            onClick={copyToText}
-                            className="flex items-center gap-2 px-5 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm font-medium"
+                            onClick={handleCopyText}
+                            className="px-4 py-2 bg-white border border-gray-300 text-main rounded-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm h-10"
                         >
-                            {copySuccess ? <CheckCircle size={18} className="text-green-600" /> : <Copy size={18} />}
-                            {copySuccess ? 'Copied!' : 'Copy Text'}
+                            {copied ? <Check size={16} className="text-green-600" /> : <Copy size={16} />}
+                            {copied ? "Copied" : "Copy Text"}
                         </button>
                         <button
                             onClick={() => window.print()}
-                            className="flex items-center gap-2 px-6 py-2 bg-brand-600 text-gray-800 rounded-lg hover:bg-brand-700 transition-colors shadow-lg font-bold"
+                            className="px-6 py-2 bg-accent text-white rounded-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-2 text-sm h-10"
                         >
-                            <Printer size={20} /> Print / Save PDF
+                            <Printer size={16} />
+                            Save PDF
                         </button>
                     </div>
                 </div>
 
-                {/* Validation Warnings */}
-                {warnings.length > 0 && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-3 text-amber-800 text-sm">
-                        <AlertTriangle size={16} className="mt-0.5 shrink-0" />
-                        <div>
-                            <span className="font-bold">Resume may be incomplete:</span>
-                            <ul className="list-disc list-inside mt-1 ml-1">
-                                {warnings.map((w, i) => <li key={i}>{w}</li>)}
-                            </ul>
-                        </div>
-                    </div>
-                )}
-            </div>
+                {/* ATS Score Panel */}
+                <div className="w-full max-w-[816px] mb-8 print:hidden">
+                    <ATSCircularScore scoreData={calculateATSScore(data)} />
+                </div>
 
-            {/* A4 Resume Container */}
-            <div className="print:shadow-none print:w-full print:m-0 print:absolute print:top-0 print:left-0 bg-white shadow-2xl">
-                <ResumePreview isPreviewMode={true} />
-            </div>
+                <ValidationAlert missingFields={missingFields} />
 
-            <style>{`
-                @media print {
-                    @page { margin: 0; size: auto; }
-                    body { background: white; }
-                    .print-hidden { display: none !important; }
-                }
-            `}</style>
-        </div>
+                <ResumePreview data={data} />
+            </div>
+        </>
     );
 }

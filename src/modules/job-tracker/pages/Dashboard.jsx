@@ -1,211 +1,192 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { ContextHeader } from '../components/layout/ContextHeader';
+import { FilterBar } from '../components/dashboard/FilterBar';
+import { JobCard } from '../components/dashboard/JobCard';
+import { JOBS } from '../lib/data';
+import { cn } from '../lib/utils';
+import { calculateMatchScore } from '../lib/scoring';
+import { Button } from '../components/ui/Button';
+import { Link } from 'react-router-dom';
+import { AlertTriangle, FolderSearch } from 'lucide-react';
 
-import React, { useState, useMemo } from 'react';
-import { jobs } from '../data/jobs';
-import JobCard from '../components/JobCard';
-import JobModal from '../components/JobModal';
-import FilterBar from '../components/FilterBar';
-import { calculateMatchScore } from '../utils/scoring';
+export default function DashboardPage() {
+    const [savedIds, setSavedIds] = useState([]);
+    const [statusMap, setStatusMap] = useState({});
+    const [prefs, setPrefs] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-export default function Dashboard() {
-    const [selectedJob, setSelectedJob] = useState(null);
-    const [savedJobs, setSavedJobs] = useState(() => {
-        return JSON.parse(localStorage.getItem('savedJobs') || '[]');
-    });
-    const [jobStatuses, setJobStatuses] = useState(() => {
-        return JSON.parse(localStorage.getItem('jobTrackerStatus') || '{}');
-    });
-    const [preferences] = useState(() => {
-        const savedPrefs = localStorage.getItem('jobTrackerPreferences');
-        return savedPrefs ? JSON.parse(savedPrefs) : null;
-    });
+    // Filter States
+    const [search, setSearch] = useState("");
     const [showMatchesOnly, setShowMatchesOnly] = useState(false);
-    const [toast, setToast] = useState(null);
     const [filters, setFilters] = useState({
-        keyword: '',
-        location: '',
-        mode: '',
-        experience: '',
-        source: '',
-        status: '',
-        sort: 'Latest'
+        location: "",
+        experience: "",
+        source: "",
+        sort: "latest",
+        status: ""
     });
 
-    const handleSave = (jobId) => {
-        let updatedSaved;
-        if (savedJobs.includes(jobId)) {
-            updatedSaved = savedJobs.filter(id => id !== jobId);
-        } else {
-            updatedSaved = [...savedJobs, jobId];
+    // Load Initial Data
+    useEffect(() => {
+        const saved = localStorage.getItem("kodnest_saved_jobs");
+        if (saved) setSavedIds(JSON.parse(saved));
+
+        const statusData = localStorage.getItem("jobTrackerStatus");
+        if (statusData) setStatusMap(JSON.parse(statusData));
+
+        const prefString = localStorage.getItem("jobTrackerPreferences");
+        if (prefString) {
+            try {
+                setPrefs(JSON.parse(prefString));
+            } catch (e) {
+                console.error("Error parsing prefs", e);
+            }
         }
-        setSavedJobs(updatedSaved);
-        localStorage.setItem('savedJobs', JSON.stringify(updatedSaved));
+        setIsLoading(false);
+    }, []);
+
+    const toggleSave = (id) => {
+        const newSaved = savedIds.includes(id)
+            ? savedIds.filter(savedId => savedId !== id)
+            : [...savedIds, id];
+        setSavedIds(newSaved);
+        localStorage.setItem("kodnest_saved_jobs", JSON.stringify(newSaved));
     };
 
-    const handleStatusChange = (jobId, newStatus) => {
-        const updatedStatuses = {
-            ...jobStatuses,
-            [jobId]: {
+    const handleStatusChange = (id, newStatus) => {
+        const updatedMap = {
+            ...statusMap,
+            [id]: {
                 status: newStatus,
-                date: new Date().toISOString()
+                updatedAt: new Date().toISOString()
             }
         };
-        setJobStatuses(updatedStatuses);
-        localStorage.setItem('jobTrackerStatus', JSON.stringify(updatedStatuses));
+        setStatusMap(updatedMap);
+        localStorage.setItem("jobTrackerStatus", JSON.stringify(updatedMap));
 
-        // Toast
-        setToast(`Status updated: ${newStatus}`);
-        setTimeout(() => setToast(null), 3000);
+        // Simple toast simulation
+        console.log(`Status for job ${id} updated to ${newStatus}`);
     };
 
-    // Compute Scored Jobs
-    const scoredJobs = useMemo(() => {
-        return jobs.map(job => {
-            const { score, color } = calculateMatchScore(job, preferences);
-            return { ...job, matchScore: score, matchColor: color };
-        });
-    }, [preferences]);
-
-    // Filter & Sort
-    const displayedJobs = useMemo(() => {
-        let result = scoredJobs;
+    // Compute Scores & Filter
+    const filteredJobs = useMemo(() => {
+        let result = JOBS.map(job => ({
+            ...job,
+            score: prefs ? calculateMatchScore(job, prefs) : 0,
+            status: statusMap[job.id]?.status || "Not Applied"
+        }));
 
         // 1. Matches Only Toggle
-        if (showMatchesOnly && preferences) {
-            result = result.filter(job => job.matchScore >= (preferences.minMatchScore || 40));
+        if (showMatchesOnly && prefs) {
+            result = result.filter(j => j.score >= prefs.minMatchScore);
         }
 
-        // 2. Filter Bar Logic (AND)
-        if (filters.keyword) {
-            const k = filters.keyword.toLowerCase();
-            result = result.filter(job =>
-                job.title.toLowerCase().includes(k) ||
-                job.company.toLowerCase().includes(k)
+        // 2. Keyword Search
+        if (search) {
+            const q = search.toLowerCase();
+            result = result.filter(j =>
+                j.title.toLowerCase().includes(q) ||
+                j.company.toLowerCase().includes(q) ||
+                j.skills.some(s => s.toLowerCase().includes(q))
             );
         }
+
+        // 3. Dropdown Filters
         if (filters.location) {
-            result = result.filter(job => job.location === filters.location);
-        }
-        if (filters.mode) {
-            result = result.filter(job => job.mode === filters.mode);
+            result = result.filter(j => j.location === filters.location);
         }
         if (filters.experience) {
-            result = result.filter(job => job.experience === filters.experience);
+            result = result.filter(j => j.experience === filters.experience);
         }
         if (filters.source) {
-            result = result.filter(job => job.source === filters.source);
+            result = result.filter(j => j.source === filters.source);
         }
-
-        // Status Filter
         if (filters.status) {
-            result = result.filter(job => {
-                const currentStatus = jobStatuses[job.id]?.status || 'Not Applied';
-                return currentStatus === filters.status;
-            });
+            result = result.filter(j => j.status === filters.status);
         }
 
-        // 3. Sorting
-        result = [...result].sort((a, b) => {
-            if (filters.sort === 'Match Score') {
-                return b.matchScore - a.matchScore;
+        // 4. Sorting
+        result.sort((a, b) => {
+            if (filters.sort === "score") {
+                return b.score - a.score; // Descending
             }
-            if (filters.sort === 'Salary') {
-                const getSalaryVal = (s) => parseInt(s.replace(/[^0-9]/g, '')) || 0;
-                return getSalaryVal(b.salaryRange) - getSalaryVal(a.salaryRange);
-            }
-            return a.postedDaysAgo - b.postedDaysAgo;
+            return a.postedDaysAgo - b.postedDaysAgo; // Ascending (Latest first)
         });
 
         return result;
-    }, [scoredJobs, showMatchesOnly, filters, preferences, jobStatuses]);
+    }, [prefs, search, showMatchesOnly, filters, statusMap]);
+
 
     return (
-        <div className="kn-route-page" style={{ maxWidth: '100%' }}>
+        <div className="bg-background min-h-screen pb-20 job-tracker-layout">
+            <ContextHeader
+                title="Dashboard"
+                description="Tracking your active job search progress."
+            />
 
-            {/* Toast Notification */}
-            {toast && (
-                <div style={{
-                    position: 'fixed',
-                    bottom: '20px',
-                    right: '20px',
-                    background: '#333',
-                    color: '#fff',
-                    padding: '10px 20px',
-                    borderRadius: '8px',
-                    zIndex: 2000,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    animation: 'fadeIn 0.3s ease-in-out'
-                }}>
-                    {toast}
+            <FilterBar
+                onSearchChange={setSearch}
+                onFilterChange={(k, v) => setFilters(prev => ({ ...prev, [k]: v }))}
+                filters={filters}
+                showMatchesOnly={showMatchesOnly}
+                onToggleMatches={() => setShowMatchesOnly(!showMatchesOnly)}
+            />
+
+            {/* Preface Banner */}
+            {!prefs && !isLoading && (
+                <div className="mx-6 mt-6 p-4 bg-warning/10 border border-warning/20 rounded-lg flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <AlertTriangle className="w-5 h-5 text-warning" />
+                        <span className="text-sm font-medium text-warning-foreground">
+                            Intelligent matching is inactive. Set your preferences to see match scores.
+                        </span>
+                    </div>
+                    <Link to="/jobs/settings">
+                        <Button size="sm" variant="secondary" className="h-8">Set Preferences</Button>
+                    </Link>
                 </div>
             )}
 
-            <div style={{ maxWidth: 'var(--kn-text-measure)', margin: '0 auto' }}>
-                <h1 className="kn-route-page__title">Dashboard</h1>
-                <p className="kn-route-page__subtext" style={{ marginBottom: 'var(--kn-space-3)' }}>
-                    {preferences ? (
-                        `Found ${displayedJobs.length} jobs based on your criteria.`
-                    ) : (
-                        <span style={{ color: 'var(--kn-accent)', fontWeight: 600 }}>
-                            Set your preferences in Settings to activate intelligent matching.
-                        </span>
-                    )}
-                </p>
-            </div>
-
-            <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-
-                {/* Toggle & Filter Bar */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--kn-space-2)' }}>
-                    <FilterBar filters={filters} setFilters={setFilters} />
-
-                    {preferences && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: 'var(--kn-space-3)' }}>
-                            <input
-                                type="checkbox"
-                                id="matchesToggle"
-                                checked={showMatchesOnly}
-                                onChange={(e) => setShowMatchesOnly(e.target.checked)}
-                                style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                            />
-                            <label htmlFor="matchesToggle" style={{ fontSize: '14px', cursor: 'pointer', fontWeight: 500 }}>
-                                Show only jobs above my threshold ({preferences.minMatchScore}%)
-                            </label>
-                        </div>
-                    )}
+            <main className="max-w-[1600px] mx-auto px-6 py-8">
+                <div className="mb-6 text-sm text-muted-foreground font-medium flex justify-between items-center">
+                    <span>Showing {filteredJobs.length} relevant opportunities</span>
                 </div>
 
-                {/* Results Grid */}
-                {displayedJobs.length > 0 ? (
-                    <div className="kn-layout-grid" style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                        gap: 'var(--kn-space-3)'
-                    }}>
-                        {displayedJobs.map(job => (
+                {filteredJobs.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center text-center py-20">
+                        <div className="w-16 h-16 bg-muted/30 rounded-full flex items-center justify-center mb-6">
+                            <FolderSearch className="w-8 h-8 text-muted-foreground" />
+                        </div>
+                        <h3 className="text-xl font-serif font-bold text-foreground mb-2">
+                            No matches found
+                        </h3>
+                        <p className="text-muted-foreground max-w-sm leading-relaxed mb-6">
+                            Try adjusting your filters or lowering your match threshold in settings.
+                        </p>
+                        <Button variant="secondary" onClick={() => {
+                            setSearch("");
+                            setFilters({ location: "", experience: "", source: "", sort: "latest", status: "" });
+                            setShowMatchesOnly(false);
+                        }}>
+                            Clear Filters
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredJobs.map((job) => (
                             <JobCard
                                 key={job.id}
                                 job={job}
-                                isSaved={savedJobs.includes(job.id)}
-                                onSave={handleSave}
-                                onView={setSelectedJob}
-                                matchScore={preferences ? job.matchScore : undefined}
-                                matchColor={preferences ? job.matchColor : undefined}
-                                status={jobStatuses[job.id]?.status}
+                                isSaved={savedIds.includes(job.id)}
+                                onToggleSave={toggleSave}
+                                matchScore={prefs ? job.score : undefined}
+                                status={statusMap[job.id]?.status || "Not Applied"}
                                 onStatusChange={handleStatusChange}
                             />
                         ))}
                     </div>
-                ) : (
-                    <div className="kn-card" style={{ textAlign: 'center', padding: 'var(--kn-space-5)' }}>
-                        <h3 style={{ fontSize: 'var(--kn-heading3-size)', color: 'var(--kn-text-muted)' }}>No matches found</h3>
-                        <p>Try adjusting your filters or lowering your match threshold in Settings.</p>
-                    </div>
                 )}
-            </div>
-
-            {selectedJob && (
-                <JobModal job={selectedJob} onClose={() => setSelectedJob(null)} />
-            )}
+            </main>
         </div>
     );
 }
